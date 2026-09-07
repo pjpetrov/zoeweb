@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZoeWeb — CanZE for the browser</title>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+  <header id="topbar">
+    <button id="menu-btn" aria-label="menu">☰</button>
+    <span class="brand">Zoe<b>Web</b></span>
+    <span id="led" title="bus activity"></span>
+    <span id="status-text">starting…</span>
+    <button id="connect-btn" class="btn">Connect</button>
+  </header>
+  <div id="layout">
+    <nav id="sidebar"><div id="nav"></div>
+      <footer>
+        GPL-3.0 · data &amp; protocol from
+        <a href="https://github.com/fesch/CanZE" target="_blank" rel="noopener">CanZE</a>
+      </footer>
+    </nav>
+    <main id="content"></main>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

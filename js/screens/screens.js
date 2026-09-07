@@ -1,0 +1,293 @@
+/*
+ * ZoeWeb — screen framework + the live-data screens replicating CanZE's
+ * activities (Dashboard, Driving, Battery, Charging, Range, Climate, Tires,
+ * Braking, Consumption).
+ */
+import { el, tile, gauge, hbar, heatmap, timeplot, section } from '../ui/widgets.js';
+import { Sid } from '../core/sid.js';
+
+export class Screen {
+  constructor(id, title, icon) {
+    this.id = id; this.title = title; this.icon = icon;
+    this._bindings = [];
+  }
+
+  /** Subscribe sid and wire its updates to widget.update(field). */
+  bind(ctx, sid, widget, intervalMs = 2000, transform = null) {
+    ctx.poller.subscribe(sid, intervalMs, this.id);
+    const field = ctx.poller.getField(sid);
+    if (!field) { widget.set?.('n/a'); return; }
+    const listener = f => widget.update(transform ? transform(f) : f);
+    field.listeners.add(listener);
+    this._bindings.push({ field, listener });
+    if (field.lastUpdated) listener(field);
+  }
+
+  mount(container, ctx) { this.render(container, ctx); }
+
+  unmount(ctx) {
+    for (const { field, listener } of this._bindings) field.listeners.delete(listener);
+    this._bindings.length = 0;
+    ctx.poller.clearOwner(this.id);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+
+export class DashboardScreen extends Screen {
+  constructor() { super('dashboard', 'Dashboard', '🏠'); }
+  render(c, ctx) {
+    const speed = gauge('Speed', 0, 150, 'km/h');
+    const power = gauge('Power', -45, 80, 'kW', { zeroCentered: true, decimals: 1 });
+    const soc = tile('State of charge', '%', 'big');
+    const range = tile('Range', 'km', 'big');
+    const plug = tile('Plug');
+    const charging = tile('Charging');
+    const aux = tile('12V battery', 'V');
+    const hvtemp = tile('Battery temp', '°C');
+    const avg = tile('Avg consumption', 'kWh/100km');
+    const energy = tile('Available energy', 'kWh');
+
+    c.append(
+      el('div', { class: 'gauges' }, speed.root, power.root),
+      el('div', { class: 'grid' }, soc.root, range.root, plug.root, charging.root,
+        aux.root, hvtemp.root, avg.root, energy.root),
+    );
+    this.bind(ctx, Sid.RealSpeed, speed, 500, f => f.value);
+    this.bind(ctx, Sid.DcPowerOut, power, 500, f => f.value);
+    this.bind(ctx, Sid.UserSoC, soc, 3000);
+    this.bind(ctx, Sid.RangeEstimate, range, 3000);
+    this.bind(ctx, Sid.PlugConnected, plug, 3000, f => ({ format: () => f.value >= 1 ? 'connected' : 'unplugged' }));
+    this.bind(ctx, Sid.ChargingStatusDisplay, charging, 3000, f => ({ format: () => f.value >= 1 ? 'charging' : 'not charging' }));
+    this.bind(ctx, Sid.Aux12V, aux, 5000);
+    this.bind(ctx, Sid.HvTemp, hvtemp, 5000);
+    this.bind(ctx, Sid.AverageConsumption, avg, 5000);
+    this.bind(ctx, Sid.AvailableEnergy, energy, 5000);
+  }
+}
+
+export class DrivingScreen extends Screen {
+  constructor() { super('driving', 'Driving', '🚗'); }
+  render(c, ctx) {
+    const speed = gauge('Speed', 0, 150, 'km/h');
+    const power = gauge('Power out', -45, 80, 'kW', { zeroCentered: true, decimals: 1 });
+    const pedal = hbar('Accelerator pedal', 0, 125, '%');
+    const posTorque = hbar('Drive torque', 0, 2200, 'Nm');
+    const negTorque = hbar('Brake torque', -2200, 0, 'Nm', { zeroCentered: true });
+    const resistive = hbar('Max regen torque available', -4096, 0, 'Nm', { zeroCentered: true });
+    const odo = tile('Odometer', 'km');
+    const tripKm = tile('Trip B', 'km');
+    const tripKwh = tile('Trip B energy', 'kWh');
+    const soc = tile('SOC', '%');
+    const range = tile('Range', 'km');
+    const rpm = tile('Motor', 'rpm');
+
+    c.append(
+      el('div', { class: 'gauges' }, speed.root, power.root),
+      section('Pedals & torque', pedal.root, posTorque.root, negTorque.root, resistive.root),
+      el('div', { class: 'grid' }, odo.root, tripKm.root, tripKwh.root, soc.root, range.root, rpm.root),
+    );
+    this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
+    this.bind(ctx, Sid.DcPowerOut, power, 300, f => f.value);
+    this.bind(ctx, Sid.Pedal, pedal, 300);
+    this.bind(ctx, Sid.TotalPositiveTorque, posTorque, 300);
+    this.bind(ctx, Sid.TotalNegativeTorque, negTorque, 300);
+    this.bind(ctx, Sid.TotalPotentialResistiveWheelsTorque, resistive, 1000, f => ({ value: -Math.abs(f.value) }));
+    this.bind(ctx, Sid.EvcOdometer, odo, 6000);
+    this.bind(ctx, Sid.TripMeterB, tripKm, 6000);
+    this.bind(ctx, Sid.TripEnergyB, tripKwh, 6000);
+    this.bind(ctx, Sid.SoC, soc, 7000);
+    this.bind(ctx, Sid.RangeEstimate, range, 7000);
+    this.bind(ctx, Sid.ElecEngineRPM, rpm, 1000);
+  }
+}
+
+export class BatteryScreen extends Screen {
+  constructor() { super('battery', 'Battery', '🔋'); }
+  render(c, ctx) {
+    const items = [
+      [Sid.RealSoC, 'Real SOC', 5000], [Sid.UserSoC, 'User SOC', 5000],
+      [Sid.SOH, 'State of health (SOH)', 8000], [Sid.AvailableEnergy, 'Available energy', 5000],
+      [Sid.TractionBatteryVoltage, 'Pack voltage', 2000], [Sid.TractionBatteryCurrent, 'Pack current', 2000],
+      [Sid.MaxCellVoltage, 'Highest cell', 5000], [Sid.MinCellVoltage, 'Lowest cell', 5000],
+      [Sid.AverageBatteryTemperature, 'Avg temperature', 8000], [Sid.HvKilometers, 'Battery km', 30000],
+      [Sid.TotalKWh, 'Energy delivered (life)', 30000], [Sid.BatterySerial, 'Battery serial', 60000],
+      [Sid.CounterFull, 'Full charges', 60000], [Sid.CounterPartial, 'Partial charges', 60000],
+    ];
+    const grid = el('div', { class: 'grid' });
+    for (const [sid, label, interval] of items) {
+      const f = ctx.poller.getField(sid);
+      const t = tile(label, f?.unit || '');
+      grid.append(t.root);
+      this.bind(ctx, sid, t, interval);
+    }
+    c.append(grid);
+
+    // 96 cell voltages
+    const cellMap = heatmap(96, 3.3, 4.25, 3, 'V');
+    c.append(section('Cell voltages (V)', cellMap.root));
+    for (let i = 0; i < 96; i++) {
+      const sid = i < 62 ? `7bb.6141.${16 + 16 * i}` : `7bb.6142.${16 + 16 * (i - 62)}`;
+      const idx = i;
+      if (ctx.poller.getField(sid)) {
+        this.bind(ctx, sid, { update: f => cellMap.update(idx, f.value) }, 10000);
+      }
+    }
+    // 12 module temperatures
+    const tempMap = heatmap(12, 5, 45, 0, '°C');
+    c.append(section('Module temperatures (°C)', tempMap.root));
+    for (let i = 0; i < 12; i++) {
+      const sid = `7bb.6104.${32 + 24 * i}`;
+      const idx = i;
+      if (ctx.poller.getField(sid)) {
+        this.bind(ctx, sid, { update: f => tempMap.update(idx, f.value) }, 10000);
+      }
+    }
+  }
+}
+
+export class ChargingScreen extends Screen {
+  constructor() { super('charging', 'Charging', '⚡'); }
+  render(c, ctx) {
+    const items = [
+      [Sid.AvailableChargingPower, 'Max charge power avail.', 5000],
+      [Sid.ChargingPower, 'Charging power', 3000],
+      [Sid.DcPowerIn, 'DC power in', 3000],
+      [Sid.UserSoC, 'User SOC', 5000], [Sid.RealSoC, 'Real SOC', 5000],
+      [Sid.SOH, 'SOH', 10000], [Sid.RangeEstimate, 'Range', 5000],
+      [Sid.HvTemp, 'Battery temp', 5000],
+      [Sid.ACPilotAmps, 'Pilot current', 3000],
+      [Sid.MainsCurrentType, 'Mains type', 5000],
+      [Sid.SupervisorState, 'Charger state', 3000],
+      [Sid.GroundResistance, 'Ground resistance', 8000],
+      [Sid.PhaseVoltage1, 'Phase 1 V', 5000], [Sid.PhaseVoltage2, 'Phase 2 V', 5000],
+      [Sid.PhaseVoltage3, 'Phase 3 V', 5000],
+      [Sid.Phase1currentRMS, 'Phase 1 A', 5000], [Sid.Phase2CurrentRMS, 'Phase 2 A', 5000],
+      [Sid.Phase3CurrentRMS, 'Phase 3 A', 5000],
+      [Sid.MainsActivePower, 'Mains power', 5000],
+      [Sid.MaxCharge, 'Max charge', 8000],
+    ];
+    const grid = el('div', { class: 'grid' });
+    for (const [sid, label, interval] of items) {
+      const f = ctx.poller.getField(sid);
+      const t = tile(label, f?.unit || '');
+      grid.append(t.root);
+      this.bind(ctx, sid, t, interval);
+    }
+    c.append(grid);
+
+    const plot = timeplot([
+      { label: 'kW in', color: '#41b0f5', min: 0, max: 50, unit: 'kW', decimals: 1 },
+      { label: 'SOC', color: '#41d98c', min: 0, max: 100, unit: '%', decimals: 1 },
+    ], { spanSec: 1800 });
+    c.append(section('Charging session', plot.root));
+    this.bind(ctx, Sid.DcPowerIn, { update: f => plot.push(0, f.value) }, 5000);
+    this.bind(ctx, Sid.RealSoC, { update: f => plot.push(1, f.value) }, 5000);
+  }
+}
+
+export class RangeScreen extends Screen {
+  constructor() { super('range', 'Range', '🛣️'); }
+  render(c, ctx) {
+    const items = [
+      [Sid.RangeEstimate, 'Range estimate', 2000],
+      [Sid.AvailableEnergy, 'Available energy', 2000],
+      [Sid.AverageConsumption, 'Average consumption', 2000],
+      [Sid.BestAverageConsumption, 'Best consumption', 8000],
+      [Sid.WorstAverageConsumption, 'Worst consumption', 8000],
+      [Sid.UserSoC, 'SOC', 3000],
+    ];
+    const grid = el('div', { class: 'grid' });
+    for (const [sid, label, interval] of items) {
+      const f = ctx.poller.getField(sid);
+      const t = tile(label, f?.unit || '');
+      grid.append(t.root);
+      this.bind(ctx, sid, t, interval);
+    }
+    c.append(grid);
+  }
+}
+
+export class ConsumptionScreen extends Screen {
+  constructor() { super('consumption', 'Consumption', '📈'); }
+  render(c, ctx) {
+    const plot = timeplot([
+      { label: 'Power out', color: '#f5a441', min: -45, max: 80, unit: 'kW', decimals: 1 },
+      { label: 'Speed', color: '#41b0f5', min: 0, max: 150, unit: 'km/h', decimals: 0 },
+    ], { spanSec: 300 });
+    c.append(section('Last 5 minutes', plot.root));
+    const inst = tile('Instant consumption', 'kWh/100km', 'big');
+    const avg = tile('Average consumption', 'kWh/100km', 'big');
+    c.append(el('div', { class: 'grid' }, inst.root, avg.root));
+    this.bind(ctx, Sid.DcPowerOut, { update: f => plot.push(0, f.value) }, 500);
+    this.bind(ctx, Sid.RealSpeed, { update: f => plot.push(1, f.value) }, 500);
+    this.bind(ctx, Sid.InstantConsumption, inst, 1000);
+    this.bind(ctx, Sid.AverageConsumption, avg, 5000);
+  }
+}
+
+export class ClimateScreen extends Screen {
+  constructor() { super('climate', 'Climate', '❄️'); }
+  render(c, ctx) {
+    const items = [
+      [Sid.ClimTempDisplay, 'Cabin setpoint', 5000],
+      [Sid.ThermalComfortPower, 'Climate power', 2000],
+      [Sid.Pressure, 'Refrigerant pressure', 3000],
+      [Sid.HvEvaporationTemp, 'Evaporator temp', 5000],
+      [Sid.HvCoolingState, 'HV cooling state', 3000],
+      [Sid.ClimaLoopMode, 'Climate loop mode', 3000],
+      [Sid.BatteryConditioningMode, 'Battery conditioning', 3000],
+      [Sid.EngineFanSpeed, 'Fan speed', 3000],
+      [Sid.HeaterSetpoint, 'Heater setpoint', 5000],
+      [Sid.DcPowerOut, 'Total DC power', 2000],
+    ];
+    const grid = el('div', { class: 'grid' });
+    for (const [sid, label, interval] of items) {
+      const f = ctx.poller.getField(sid);
+      const t = tile(label, f?.unit || '');
+      grid.append(t.root);
+      this.bind(ctx, sid, t, interval);
+    }
+    c.append(grid);
+  }
+}
+
+export class TiresScreen extends Screen {
+  constructor() { super('tires', 'Tires', '🛞'); }
+  render(c, ctx) {
+    const mk = (labelP, labelS) => ({ p: tile(labelP, 'bar'), s: tile(labelS) });
+    const fl = mk('Front left', 'FL state'), fr = mk('Front right', 'FR state');
+    const rl = mk('Rear left', 'RL state'), rr = mk('Rear right', 'RR state');
+    c.append(el('div', { class: 'tires-layout' },
+      el('div', { class: 'grid two' }, fl.p.root, fr.p.root, fl.s.root, fr.s.root),
+      el('div', { class: 'grid two' }, rl.p.root, rr.p.root, rl.s.root, rr.s.root),
+    ));
+    const state = f => ({ format: () => ['?', 'ok', 'not monitored', 'low pressure', 'leak!'][Math.round(f.value)] ?? f.format() });
+    // CanZE Ph1 pressures come in mbar ÷ 100
+    const bar = f => ({ format: () => Number.isNaN(f.value) ? '—' : (f.unit.toLowerCase() === 'mbar' ? (f.value / 1000).toFixed(2) : f.value.toFixed(2)) });
+    this.bind(ctx, Sid.TireFLPressure, fl.p, 6000, bar);
+    this.bind(ctx, Sid.TireFRPressure, fr.p, 6000, bar);
+    this.bind(ctx, Sid.TireRLPressure, rl.p, 6000, bar);
+    this.bind(ctx, Sid.TireRRPressure, rr.p, 6000, bar);
+    this.bind(ctx, Sid.TireFLState, fl.s, 6000, state);
+    this.bind(ctx, Sid.TireFRState, fr.s, 6000, state);
+    this.bind(ctx, Sid.TireRLState, rl.s, 6000, state);
+    this.bind(ctx, Sid.TireRRState, rr.s, 6000, state);
+  }
+}
+
+export class BrakingScreen extends Screen {
+  constructor() { super('braking', 'Braking', '🛑'); }
+  render(c, ctx) {
+    const driver = hbar('Driver brake request', 0, 4000, 'Nm');
+    const elec = hbar('Electric (regen) braking', 0, 2200, 'Nm');
+    const friction = hbar('Friction braking', 0, 4000, 'Nm');
+    const hydraulic = hbar('Hydraulic torque request', 0, 4000, 'Nm');
+    c.append(section('Brake blending', driver.root, elec.root, friction.root, hydraulic.root),
+      el('p', { class: 'hint' }, 'Shows how braking is split between the motor (regeneration) and the friction brakes.'));
+    this.bind(ctx, Sid.DriverBrakeWheelTorqueRequest, driver, 300, f => ({ value: Math.abs(f.value) }));
+    this.bind(ctx, Sid.ElecBrakeTorque, elec, 300, f => ({ value: Math.abs(f.value) }));
+    this.bind(ctx, Sid.FrictionTorque, friction, 300, f => ({ value: Math.max(0, f.value) }));
+    this.bind(ctx, Sid.HydraulicTorqueRequest, hydraulic, 500, f => ({ value: Math.abs(f.value) }));
+  }
+}

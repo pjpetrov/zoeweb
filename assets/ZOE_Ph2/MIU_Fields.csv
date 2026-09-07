@@ -1,0 +1,102 @@
+,734,0,0,1,0,0,,1001,5001,ff,StartDiagnosticSession.Default
+,734,0,0,1,0,0,,1002,5002,ff,StartDiagnosticSession.Programming
+,734,0,0,1,0,0,,1003,5003,ff,StartDiagnosticSession.ExtendedDiagnostic
+,734,0,0,1,0,0,,14FFFFFF,54FFFFFF,ff,ClearDiagnosticInformation.All
+,734,16,23,1,0,0,,1901FF,5901FF,ff,DTCStatusAvailabilityMask
+,734,24,31,1,0,0,,1901FF,5901FF,ff,DTCFormatIdentifier,0:SAE_J2012-DA_DTC;1:ISO_14229-1_DTC;2:SAE_J1939-73_DTC;3:ISO_11992-4_DTC;4:SAE_J2012-DA_WWHOBD_DTC
+,734,32,47,1,0,0,,1901FF,5901FF,ff,DTCCount
+,734,16,23,1,0,0,,1902FF,5902FF,ff,DTCStatusAvailabilityMask
+,734,24,39,1,0,0,,1902FF,5902FF,ff,DTCDeviceIdentifier,40754:buttons/touchpad;40756:CAN M defaut;40753:Internal Default;40757:LIN defaut;40755:LVDS default;40758:I2C touch controler;40759:Power Supply Monitoring;40760:Display over temperature
+,734,40,47,1,0,0,,1902FF,5902FF,ff,DTCFailureType,0:Device and failure type ODB codding;1:General Electrical Failure;2:General signal failure;3:FM / PWM (Pulse Width Modulated) Failures;4:System Internal Failures;5:System Programming Failures;6:Algorithm Based Failures;7:Mechanical Failures;8:Bus Signal / Message Failures;9:Component Failures;17:circuit short to ground;18:circuit short to battery;19:circuit open;20:circuit short to ground or open;21:circuit short to battery or open;22:circuit voltage below threshold;23:circuit voltage above threshold;24:circuit current below threshold;25:circuit current above threshold;26:circuit resistance below threshold;27:circuit resistance above threshold;28:circuit voltage out of range;29:circuit current out of range;30:circuit resistance out of range;31:circuit intermittent;33:signal amplitude < minimum;34:signal amplitude > maximum;35:signal stuck low;36:signal stuck high;37:signal shape / waveform failure;38:signal rate of change below threshold;39:signal rate of change above threshold;40:signal bias level out of range / zero adj. failure;41:signal signal invalid;47:signal erratic;49:no signal;50:signal low time < minimum;51:signal low time > maximum;52:signal high time < minimum;53:signal high time > maximum;54:signal frequency too low;55:signal frequency too high;56:signal frequency incorrect;57:incorrect has too few pulses;58:incorrect has too many pulses;65:general checksum failure;66:general memory failure;67:special memory failure;68:data memory failure;69:program memory failure;70:calibration / parameter memory failure;71:watchdog / safety µC failure;72:supervision software failure;73:internal electronic failure;74:incorrect component installed;75:over temperature;81:not programmed;82:not activated;83:deactivated;84:missing calibration;85:not configured;97:signal calculation failure;98:signal compare failure;99:circuit / component protection time-out;100:signal plausibility failure;101:signal has too few transitions / events;102:signal has too many transitions / events;103:signal incorrect after event;104:event information;113:actuator stuck;114:actuator stuck open;115:actuator stuck closed;116:actuator slipping;117:emergency position not reachable;118:wrong mounting position;119:commanded position not reachable;120:alignment or adjustment incorrect;121:mechanical linkage failure;122:fluid leak or seal failure;123:low fluid level;129:invalid serial data received;130:alive / sequence counter incorrect / not updated;131:value of signal protection calculation incorrect;132:signal below allowable range;133:signal above allowable range;134:signal invalid;135:missing message;136:bus off;143:erratic;145:parametric;146:performance or incorrect operation;147:no operation;148:unexpected operation;149:incorrect assembly;150:component internal failure;151:Component or sys. operation obstructed or blocked;152:component or system over temperature
+,734,44,47,1,0,0,,1902FF,5902FF,ff,DTCFailureType.ManufacturerOrSupplier
+,734,48,48,1,0,0,,1902FF,5902FF,ff,DTCStatus.warningIndicatorRequested,0:No;1:Yes
+,734,49,49,1,0,0,,1902FF,5902FF,ff,DTCStatus.testNotCompletedThisMonitoringCycle,0:No;1:Yes
+,734,50,50,1,0,0,,1902FF,5902FF,ff,DTCStatus.testFailedSinceLastClear,0:No;1:Yes
+,734,51,51,1,0,0,,1902FF,5902FF,ff,DTCStatus.testNotCompletedSinceLastClear,0:No;1:Yes
+,734,52,52,1,0,0,,1902FF,5902FF,ff,DTCStatus.confirmedDTC,0:No;1:Yes
+,734,53,53,1,0,0,,1902FF,5902FF,ff,DTCStatus.pendingDTC,0:No;1:Yes
+,734,54,54,1,0,0,,1902FF,5902FF,ff,DTCStatus.testFailedThisMonitoringCycle,0:No;1:Yes
+,734,55,55,1,0,0,,1902FF,5902FF,ff,DTCStatus.testFailed,0:No;1:Yes
+,734,16,39,1,0,0,,1903000000FF,5903000000FF,4ff,DTCRecord
+,734,40,47,1,0,0,,1903000000FF,5903000000FF,ff,DTCSnapshotRecordNumber
+,734,16,39,1,0,0,,1904000000FF,5904000000FF,4ff,DTCRecord
+,734,40,47,1,0,0,,1904000000FF,5904000000FF,ff,DTCSnapshotRecordNumber
+,734,16,23,1,0,0,,190A,590A,ff,DTCStatusAvailabilityMask
+,734,24,39,1,0,0,,190A,590A,ff,DTCDeviceIdentifier,40754:buttons/touchpad;40756:CAN M defaut;40753:Internal Default;40757:LIN defaut;40755:LVDS default;40758:I2C touch controler;40759:Power Supply Monitoring;40760:Display over temperature
+,734,40,47,1,0,0,,190A,590A,ff,DTCFailureType,0:Device and failure type ODB codding;1:General Electrical Failure;2:General signal failure;3:FM / PWM (Pulse Width Modulated) Failures;4:System Internal Failures;5:System Programming Failures;6:Algorithm Based Failures;7:Mechanical Failures;8:Bus Signal / Message Failures;9:Component Failures;17:circuit short to ground;18:circuit short to battery;19:circuit open;20:circuit short to ground or open;21:circuit short to battery or open;22:circuit voltage below threshold;23:circuit voltage above threshold;24:circuit current below threshold;25:circuit current above threshold;26:circuit resistance below threshold;27:circuit resistance above threshold;28:circuit voltage out of range;29:circuit current out of range;30:circuit resistance out of range;31:circuit intermittent;33:signal amplitude < minimum;34:signal amplitude > maximum;35:signal stuck low;36:signal stuck high;37:signal shape / waveform failure;38:signal rate of change below threshold;39:signal rate of change above threshold;40:signal bias level out of range / zero adj. failure;41:signal signal invalid;47:signal erratic;49:no signal;50:signal low time < minimum;51:signal low time > maximum;52:signal high time < minimum;53:signal high time > maximum;54:signal frequency too low;55:signal frequency too high;56:signal frequency incorrect;57:incorrect has too few pulses;58:incorrect has too many pulses;65:general checksum failure;66:general memory failure;67:special memory failure;68:data memory failure;69:program memory failure;70:calibration / parameter memory failure;71:watchdog / safety µC failure;72:supervision software failure;73:internal electronic failure;74:incorrect component installed;75:over temperature;81:not programmed;82:not activated;83:deactivated;84:missing calibration;85:not configured;97:signal calculation failure;98:signal compare failure;99:circuit / component protection time-out;100:signal plausibility failure;101:signal has too few transitions / events;102:signal has too many transitions / events;103:signal incorrect after event;104:event information;113:actuator stuck;114:actuator stuck open;115:actuator stuck closed;116:actuator slipping;117:emergency position not reachable;118:wrong mounting position;119:commanded position not reachable;120:alignment or adjustment incorrect;121:mechanical linkage failure;122:fluid leak or seal failure;123:low fluid level;129:invalid serial data received;130:alive / sequence counter incorrect / not updated;131:value of signal protection calculation incorrect;132:signal below allowable range;133:signal above allowable range;134:signal invalid;135:missing message;136:bus off;143:erratic;145:parametric;146:performance or incorrect operation;147:no operation;148:unexpected operation;149:incorrect assembly;150:component internal failure;151:Component or sys. operation obstructed or blocked;152:component or system over temperature
+,734,48,55,1,0,0,,190A,590A,ff,StatusOfDTC
+,734,16,31,1,0,0,,1914,5914,ff,DTCDeviceIdentifier,40754:buttons/touchpad;40756:CAN M defaut;40753:Internal Default;40757:LIN defaut;40755:LVDS default;40758:I2C touch controler;40759:Power Supply Monitoring;40760:Display over temperature
+,734,32,39,1,0,0,,1914,5914,ff,DTCFailureType,0:Device and failure type ODB codding;1:General Electrical Failure;2:General signal failure;3:FM / PWM (Pulse Width Modulated) Failures;4:System Internal Failures;5:System Programming Failures;6:Algorithm Based Failures;7:Mechanical Failures;8:Bus Signal / Message Failures;9:Component Failures;17:circuit short to ground;18:circuit short to battery;19:circuit open;20:circuit short to ground or open;21:circuit short to battery or open;22:circuit voltage below threshold;23:circuit voltage above threshold;24:circuit current below threshold;25:circuit current above threshold;26:circuit resistance below threshold;27:circuit resistance above threshold;28:circuit voltage out of range;29:circuit current out of range;30:circuit resistance out of range;31:circuit intermittent;33:signal amplitude < minimum;34:signal amplitude > maximum;35:signal stuck low;36:signal stuck high;37:signal shape / waveform failure;38:signal rate of change below threshold;39:signal rate of change above threshold;40:signal bias level out of range / zero adj. failure;41:signal signal invalid;47:signal erratic;49:no signal;50:signal low time < minimum;51:signal low time > maximum;52:signal high time < minimum;53:signal high time > maximum;54:signal frequency too low;55:signal frequency too high;56:signal frequency incorrect;57:incorrect has too few pulses;58:incorrect has too many pulses;65:general checksum failure;66:general memory failure;67:special memory failure;68:data memory failure;69:program memory failure;70:calibration / parameter memory failure;71:watchdog / safety µC failure;72:supervision software failure;73:internal electronic failure;74:incorrect component installed;75:over temperature;81:not programmed;82:not activated;83:deactivated;84:missing calibration;85:not configured;97:signal calculation failure;98:signal compare failure;99:circuit / component protection time-out;100:signal plausibility failure;101:signal has too few transitions / events;102:signal has too many transitions / events;103:signal incorrect after event;104:event information;113:actuator stuck;114:actuator stuck open;115:actuator stuck closed;116:actuator slipping;117:emergency position not reachable;118:wrong mounting position;119:commanded position not reachable;120:alignment or adjustment incorrect;121:mechanical linkage failure;122:fluid leak or seal failure;123:low fluid level;129:invalid serial data received;130:alive / sequence counter incorrect / not updated;131:value of signal protection calculation incorrect;132:signal below allowable range;133:signal above allowable range;134:signal invalid;135:missing message;136:bus off;143:erratic;145:parametric;146:performance or incorrect operation;147:no operation;148:unexpected operation;149:incorrect assembly;150:component internal failure;151:Component or sys. operation obstructed or blocked;152:component or system over temperature
+,734,40,47,1,0,0,,1914,5914,ff,DTCFaultDetectionCounter
+,734,24,24,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_H,0:switch H not pressed;1:switch H pressed
+,734,25,25,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_G,0:switch G not pressed;1:switch G pressed
+,734,26,26,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_F,0:switch F not pressed;1:switch F pressed
+,734,27,27,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_E,0:switch E not pressed;1:switch E pressed
+,734,28,28,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_D,0:switch D not pressed;1:switch D pressed
+,734,29,29,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_C,0:switch C not pressed;1:switch C pressed
+,734,30,30,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_B,0:switch B not pressed;1:switch B pressed
+,734,31,31,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_A,0:switch A not pressed;1:switch A pressed
+,734,32,32,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_S,0:switch S not pressed;1:switch S pressed
+,734,33,33,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_R,0:switch R not pressed;1:switch R pressed
+,734,34,34,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_P,0:switch P not pressed;1:switch P pressed
+,734,35,35,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_N,0:switch N not pressed;1:switch N pressed
+,734,36,36,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_M,0:switch M not pressed;1:switch M pressed
+,734,37,37,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_L,0:switch L not pressed;1:switch L pressed
+,734,38,38,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_K,0:switch K not pressed;1:switch K pressed
+,734,39,39,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_J,0:switch J not pressed;1:switch J pressed
+,734,41,41,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_Z,0:switch Z not pressed;1:switch Z pressed
+,734,42,42,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_Y,0:switch Y not pressed;1:switch Y pressed
+,734,43,43,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_X,0:switch X not pressed;1:switch X pressed
+,734,44,44,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_W,0:switch W not pressed;1:switch W pressed
+,734,45,45,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_V,0:switch V not pressed;1:switch V pressed
+,734,46,46,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_U,0:switch U not pressed;1:switch U pressed
+,734,47,47,1,0,0,,220101,620101,ff,Switch_Climate_Control_Short_Press.Switch_T,0:switch T not pressed;1:switch T pressed
+,734,24,31,1,0,0,,220108,620108,ff,Output control Telltales,1:ON;2:OFF
+,734,24,31,1,0,0,%,220115,620115,ff,Output control PWM Display
+,734,24,31,1,0,0,,220116,620116,ff,Output Control Display Color Test,0:Black;1:Red;2:Green;3:Blue;4:White
+,734,26,31,1,0,0,,220120,620120,ff,RadioKey,0:No pressed;1:Button 1 pressed;2:Button 2 pressed;3:Button 3 pressed;4:Button 4 pressed;5:Button 5 pressed;6:Button 6 pressed
+,734,31,31,1,0,0,,220121,620121,ff,CP_On_Off,0:switch Off;1:switch On
+,734,24,39,1,0,0,,220123,620123,ff,Last_Touch.CoordinateX
+,734,40,55,1,0,0,,220123,620123,ff,Last_Touch.CoordinateY
+,734,24,31,.4,0,1,%,220204,620204,ff,Global_dimming.Max_Command
+,734,32,39,.4,0,1,%,220204,620204,ff,Global_dimming.Min_Command
+,734,40,47,.4,0,1,%,220204,620204,ff,Global_dimming.Max_Display_Night
+,734,48,55,.4,0,1,%,220204,620204,ff,Global_dimming.Min_Display_Night
+,734,56,63,.4,0,1,%,220204,620204,ff,Global_dimming.Max_Display_day
+,734,64,71,.4,0,1,%,220204,620204,ff,Global_dimming.Min_Display_day
+,734,72,79,.4,0,1,%,220204,620204,ff,Global_dimming.Max_LCD_Night
+,734,80,87,.4,0,1,%,220204,620204,ff,Global_dimming.Min_LCD_Night
+,734,88,95,.4,0,1,%,220204,620204,ff,Global_dimming.Max_LCD_Day
+,734,96,103,.4,0,1,%,220204,620204,ff,Global_dimming.Min_LCD_Day
+,734,104,111,.4,0,1,%,220204,620204,ff,Global_dimming.Day_Telltale
+,734,112,119,.4,0,1,%,220204,620204,ff,Global_dimming.Night_Telltale
+,734,120,127,.4,0,1,%,220204,620204,ff,Global_dimming.Dark_Display
+,734,24,31,10,0,0,ms,220218,620218,ff,KL_ShortPush
+,734,24,31,100,0,0,ms,220219,620219,ff,KL_LongPush
+,734,28,31,10,0,0,ms,220230,620230,ff,PRESS_FILTER
+,734,27,31,100,0,0,ms,220231,620231,ff,LONG_PRESS
+,734,28,31,50,-2,0,ms,220232,620232,ff,CONTINOUS_PRESS
+,734,27,31,5,-6,0,s,220236,620236,ff,JAMMED_PRESS
+,734,28,31,500,0,0,ms,220258,620258,ff,ONOFF_LONG_PRESS
+,734,24,31,.05,0,2,,220260,620260,ff,SmoothingLow.K_value
+,734,32,39,.05,0,2,,220260,620260,ff,SmoothingLow.J_value
+,734,44,47,5,0,0,ms,220260,620260,ff,SmoothingLow.TE_value
+,734,24,31,1,0,0,,220301,620301,ff,HW_Reset_Counter
+,734,24,31,1,0,0,,220302,620302,ff,SW_Reset_Counter
+,734,24,31,1,0,0,,220321,620321,ff,EEPROM_default
+,734,24,143,1,0,0,,220323,620323,2ff,Part Identification
+,734,24,103,1,0,0,,22F012,62F012,2ff,Operationnal_Reference
+,734,24,47,1,0,0,km,22F0D0,62F0D0,ff,Mileage
+,734,24,31,1,0,0,,22F0D1,62F0D1,ff,DTCoccurenceCounter
+,734,24,39,.001,0,3,V,22F0D2,62F0D2,ff,BaterryVoltage
+,734,24,31,1,40,0,°C,22F0D3,62F0D3,ff,Display_Temperature
+,734,24,103,1,0,0,,22F187,62F187,2ff,vehicleManufacturerSparePartNumber
+,734,24,103,1,0,0,,22F188,62F188,2ff,vehicleManufacturerECUSoftwareNumber
+,734,24,103,1,0,0,,22F18A,62F18A,2ff,systemSupplierIdentifier
+,734,24,183,1,0,0,,22F18C,62F18C,2ff,ECUSerialNumber
+,734,24,159,1,0,0,,22F190,62F190,2ff,VIN
+,734,24,103,1,0,0,,22F191,62F191,2ff,vehicleManufacturerECUHardwareNumber
+,734,24,79,1,0,0,,22F194,62F194,2ff,systemSupplierECUSoftwareNumber
+,734,24,79,1,0,0,,22F195,62F195,2ff,systemSupplierECUSoftwareVersionNumber
+,734,24,31,1,0,0,,22F1A0,62F1A0,4ff,diagnosticVersion
+,734,0,0,1,0,0,,3E00,7E00,ff,TesterPresent.WithResponse

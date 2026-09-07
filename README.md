@@ -1,0 +1,156 @@
+# ZoeWeb — CanZE for the browser
+
+A web clone of [CanZE](https://github.com/fesch/CanZE) ("take a closer look at your ZE car"):
+live diagnostics for Renault ZE electric cars (Zoe Ph1, Zoe Ph2/ZE50, Twingo III Electric, Twizy)
+running entirely in the browser — no app install, served as a static website.
+
+It talks to a cheap ELM327-compatible OBD2 dongle over **Web Serial** (USB) or
+**Web Bluetooth** (BLE), and reuses CanZE's actual vehicle databases (~40 000 field
+definitions, ECU maps, and fault-code catalogs) so it can decode the same data the
+Android app can.
+
+## Screenshots
+
+| Dashboard | Battery (96-cell heatmap) |
+|---|---|
+| ![Dashboard](screenshots/dashboard.png) | ![Battery](screenshots/battery.png) |
+
+| Driving | Charging |
+|---|---|
+| ![Driving](screenshots/driving.png) | ![Charging](screenshots/charging.png) |
+
+![Service procedures](screenshots/service.png)
+
+*All screenshots taken in the built-in demo mode (simulated Zoe) — no car needed to try it.*
+
+## Screens (CanZE feature parity)
+
+| Screen | What it shows |
+|---|---|
+| Dashboard | speed & power gauges, SOC, range, plug/charge state, 12V battery, temps |
+| Driving | speed, pedal, drive/brake torque bars, odometer, trip meter |
+| Battery | real/user SOC, SOH, pack V/A, **96 cell voltages heatmap**, module temperatures heatmap, battery serial, charge counters |
+| Charging | charger state, pilot current, phase voltages/currents, ground resistance, DC power, live charging graph |
+| Range | range estimate, available energy, avg/best/worst consumption |
+| Consumption | live power & speed plot, instant consumption |
+| Climate | climate power, refrigerant pressure, loop modes, battery conditioning |
+| Tires | TPMS pressures and states per wheel |
+| Braking | brake blending: driver request vs regen vs friction |
+| Fault codes | read DTCs per ECU or scan the whole car, decoded with CanZE's DTC catalogs |
+| All data | browse and live-poll *every* known field of any ECU, with search |
+
+## Beyond CanZE — Service procedures
+
+The **Service** screen offers guided procedures for the Zoe Ph1 / ZE40:
+
+- **HV battery health report** — SOH, all 96 cell voltages with spread analysis,
+  balancing activity, lifetime kWh/km counters, serial number; copy-to-clipboard
+  report for used-car checks and warranty arguments (read-only)
+- **12V battery & DC-DC check** — actual 12V voltage and DC-DC converter output,
+  with plain-language verdicts (the most common Zoe breakdown; read-only)
+- **Charging problems quick check** — scans BCB-OBC + EVC + LBC for stored faults
+  after a failed charge, with an optional guarded clear of all three
+- **Water pump counter reset** ("Check Electric System" / DTC 0463) — reads the four
+  EVC wear counters (`3349`/`334A`/`334B`/`3531`), then after typed confirmation
+  zeroes them via `2E` writes, clears the DTC and verifies (per cedricp/ddtplugins PR #8)
+- **TPMS reference pressures** — the per-wheel pressure/temperature references the
+  BCM has learned (read-only)
+- **ECU identification report** — software/version numbers of every reachable ECU,
+  copyable; snapshot before a dealer visit, compare after
+
+- **Cluster preferences** — the classic DDT4All cluster tweaks, driven by the
+  verified `Config Generale` identifiers: enable the clock (12/24 h) and outside
+  temperature on the dash, switch km/miles, bar/PSI, cluster language, indicator
+  sound. Reads current values first; every write is verified by read-back.
+
+Forum config tweaks living in OTHER ECUs (auto door locking, DRL behaviour,
+mirror folding — BCM; Android Auto — R-Link, which sits on the multimedia CAN at
+OBD pins 12/13 and needs a rewired cable plus Renault's proprietary MFD database)
+are deliberately not included: no verified request bytes can be shipped. Use
+DDT4All with the XML matching your ECU for those.
+
+## Beyond CanZE — the Pro console
+
+CanZE is deliberately read-only. ZoeWeb adds write capabilities (use responsibly,
+on your own car only):
+
+- **Clear fault codes** per ECU (UDS service `14 FFFFFF`), with confirmation
+- **Diagnostic session control** (default / extended, `10 C0` / `10 03`)
+- **ReadDataByIdentifier** browser (service `22`)
+- **WriteDataByIdentifier** (service `2E`) — guarded: reads the current value first
+  (logged for rollback), then requires typing the ECU name to confirm
+- **RoutineControl** (service `31`) for actuator tests and resets
+- **Raw UDS console** with a full request/response traffic log
+
+⚠️ **Writes and routines are executed exactly as you type them.** A wrong write can
+misconfigure or permanently damage an ECU. Know your Renault DDT parameter
+documentation before writing anything, keep the car stationary, and never use
+this while driving. You alone are responsible for what you send to your car.
+
+## Running it
+
+It is a static site — any web server works:
+
+```bash
+cd zoe
+python3 -m http.server 8080     # then open http://localhost:8080
+```
+
+For real hardware access the page must be served from **`https://` or
+`http://localhost`** (browser security requirement for Web Serial / Web Bluetooth).
+Any static host (nginx, GitHub Pages, Netlify…) is fine for https.
+
+### Hardware & browser support
+
+| Connection | Works in | Notes |
+|---|---|---|
+| Demo (simulated Zoe) | every browser | no hardware needed, full UI works |
+| USB / serial ELM327 | Chrome & Edge, desktop | pick baud rate in Settings (38400 for older clones) |
+| Bluetooth **LE** ELM327 (vLinker, vGate, …) | Chrome desktop & **Android** | probes the common GATT profiles (FFF0/FFE0/…) |
+
+**Classic Bluetooth (SPP) dongles — what most people used with CanZE — are not
+directly reachable from any browser.** Two ways to use one anyway:
+
+- **macOS**: pair the dongle in System Settings → Bluetooth (PIN 1234/0000).
+  macOS creates a virtual serial port (`/dev/cu.<name>`, e.g. `cu.OBDII`) which
+  shows up in the Web Serial picker — use the USB/serial option (any baud rate)
+  and pick the port named after the dongle, never `Bluetooth-Incoming-Port`.
+  Known macOS quirk: after the link drops (dongle sleep, car locked), macOS often
+  refuses to reconnect — "Forget This Device" and re-pair brings it back.
+  The dongles themselves sleep after a few idle minutes; replug to wake them.
+- **Linux/Windows**: run the included relay, `python3 tools/spp-bridge.py <dongle-MAC>`
+  (Linux talks RFCOMM directly; you can also pass a serial device path).
+  Then pick "Classic Bluetooth via PC bridge" in Settings. The bridge listens on
+  `ws://localhost:8472`; `--loopback` runs a self-test without hardware.
+
+Otherwise use a BLE dongle (Vgate iCar Pro BLE 4.0, vLinker MC+, OBDLink CX) or USB.
+On iOS, no browser supports Web Bluetooth/Serial; use the demo mode only.
+
+Select your car (Zoe Ph1 / Zoe Ph2 / Twingo III / Twizy) in Settings, plug the
+dongle into the OBD2 port, switch the ignition on, then press **Connect**.
+Add `?autoconnect` to the URL to connect automatically on load.
+
+## How it works
+
+```
+assets/<CAR>/*.csv        CanZE's databases, verbatim (ECUs, fields, DTCs, tests)
+js/core/fields.js         CSV parser + bit-level frame decoder ((raw-offset)*resolution)
+js/core/ecus.js           ECU registry, per-car database loader
+js/core/poller.js         interval scheduler; groups fields into frame requests
+js/core/uds.js            DTC read/clear, sessions, DID read/write, routines
+js/core/virtual.js        computed fields (DC power, instant consumption, …)
+js/device/elm327.js       ELM327 driver: init, free frames (atma), ISO-TP framing
+js/device/transport.js    Web Serial + Web Bluetooth transports
+js/device/demo.js         a virtual ELM327+Zoe synthesized from the field database
+js/screens/*, js/ui/*     the screens and widgets
+```
+
+The protocol flow is a direct port of CanZE's `ELM327.java`: `atcaf0` manual
+ISO-TP framing, `atfcsm1` flow control, 11-bit (`atsp6`) and 29-bit (`atsp7` +
+`atcp`, Zoe Ph2 gateway) addressing, multi-frame reassembly.
+
+## License & credits
+
+GPL-3.0, like CanZE. The vehicle databases in `assets/` and the protocol design
+are the work of the [CanZE team](https://canze.fisch.lu) — all credit to them.
+This project is not affiliated with Renault. Use at your own risk.

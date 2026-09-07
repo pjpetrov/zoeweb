@@ -1,0 +1,28 @@
+930B,Rear right loudspeaker
+930D,Front right loudspeaker
+930F,Front left loudspeaker
+9311,Rear left loudspeaker
+9320,Rear right tweeter
+9321,Front right tweeter
+9322,Front left tweeter
+9323,Rear left tweeter
+9370,Bass Box
+9317,Subwoofers
+9306,Surrounds (Twidlers)
+9318,Centerfill Speaker
+93EB,External ANC Microphone Supply 1
+93EC,External ANC Microphone Supply 2
+93ED,External ANC Microphone Supply 3
+9342,ECU
+9345,Temperature
+9341,Virgin Or incomplete configuration
+E14F,BCM communication
+E140,ECM communication
+E16B,FRCAMERA communication
+E143,HEVC communication
+E165,SONAR communication
+E154,A-IVI communication
+E14E,METER communication
+E16D,TCU communication
+E15B,USM communication
+E148,VDC communication

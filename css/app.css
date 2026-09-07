@@ -1,0 +1,140 @@
+/* ZoeWeb — dark automotive UI */
+:root {
+  --bg: #10141b;
+  --panel: #1a2029;
+  --panel2: #222a36;
+  --fg: #dde3ec;
+  --dim: #8b95a5;
+  --accent: #41b0f5;
+  --good: #41d98c;
+  --warn: #f5a441;
+  --bad: #f0564f;
+  --border: #2c3644;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex; flex-direction: column;
+}
+
+/* top bar */
+#topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 20;
+}
+.brand { font-size: 19px; letter-spacing: .5px; }
+.brand b { color: var(--accent); }
+#menu-btn { display: none; background: none; border: 0; color: var(--fg); font-size: 22px; cursor: pointer; }
+#status-text { flex: 1; color: var(--dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#status-text.warn { color: var(--warn); }
+#led { width: 10px; height: 10px; border-radius: 50%; background: #333c48; flex: none; transition: background .1s; }
+#led.on { background: var(--good); box-shadow: 0 0 8px var(--good); }
+
+/* layout */
+#layout { display: flex; flex: 1; min-height: 0; }
+#sidebar {
+  width: 210px; flex: none; background: var(--panel); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+#nav { display: flex; flex-direction: column; padding: 8px; gap: 2px; flex: 1; }
+.nav-btn {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  background: none; border: 0; border-radius: 8px; color: var(--fg);
+  font-size: 15px; cursor: pointer; text-align: left;
+}
+.nav-btn:hover { background: var(--panel2); }
+.nav-btn.active { background: var(--accent); color: #08131c; font-weight: 600; }
+.nav-icon { width: 22px; text-align: center; }
+#sidebar footer { padding: 10px 14px; font-size: 12px; color: var(--dim); }
+#sidebar footer a { color: var(--accent); }
+
+#content { flex: 1; overflow-y: auto; padding: 18px; }
+
+/* cards & grids */
+.card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.card h3 { margin: 0 0 10px; font-size: 14px; color: var(--dim); text-transform: uppercase; letter-spacing: .8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.grid.two { grid-template-columns: 1fr 1fr; }
+.tires-layout { display: flex; flex-direction: column; gap: 30px; max-width: 560px; }
+
+.tile { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
+.tile-label { font-size: 12px; color: var(--dim); }
+.tile-value { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile.big .tile-value { font-size: 38px; color: var(--accent); }
+.tile-unit { font-size: 12px; color: var(--dim); }
+.tile-value.stale { opacity: .45; }
+
+/* gauges */
+.gauges { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+.gauge { text-align: center; }
+.gauge-label { color: var(--dim); font-size: 13px; margin-top: -8px; }
+
+/* bars */
+.hbar { margin: 10px 0; }
+.hbar-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--dim); margin-bottom: 4px; }
+.hbar-value { color: var(--fg); font-variant-numeric: tabular-nums; }
+.hbar-track { position: relative; height: 14px; background: rgba(128,140,160,.15); border-radius: 7px; overflow: hidden; }
+.hbar-fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--accent); border-radius: 7px; transition: width .15s, left .15s; }
+
+/* heatmap */
+.heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 4px; }
+.heatcell {
+  padding: 6px 2px; text-align: center; border-radius: 6px; font-size: 12px;
+  background: var(--panel2); font-variant-numeric: tabular-nums;
+}
+
+/* forms & buttons */
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.toolbar label { color: var(--dim); font-size: 13px; min-width: 110px; }
+.input, select.input {
+  background: var(--panel2); color: var(--fg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 14px; min-width: 130px;
+}
+.btn {
+  background: var(--accent); color: #08131c; border: 0; border-radius: 8px;
+  padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn.danger { background: var(--bad); color: #fff; }
+.btn.connected { background: var(--good); color: #08131c; }
+
+/* tables */
+.table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.table th, .table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.table th { color: var(--dim); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+.scroll-x { overflow-x: auto; }
+.mono { font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
+
+/* pro console */
+.console {
+  background: #0b0f14; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px; height: 260px; overflow-y: auto; font-size: 13px;
+}
+.console .tx { color: var(--accent); }
+.console .rx { color: var(--good); }
+.console .err { color: var(--bad); }
+.console .hint { color: var(--dim); }
+.warnbox {
+  background: rgba(240,86,79,.12); border: 1px solid var(--bad); border-radius: 10px;
+  padding: 12px 16px; margin-bottom: 16px; font-size: 14px;
+}
+.hint { color: var(--dim); font-size: 13px; }
+p.hint { margin: 6px 0; }
+
+/* mobile */
+@media (max-width: 760px) {
+  #menu-btn { display: block; }
+  #sidebar {
+    position: fixed; left: -230px; top: 47px; bottom: 0; z-index: 15; transition: left .2s;
+    box-shadow: 4px 0 20px rgba(0,0,0,.4);
+  }
+  #sidebar.open { left: 0; }
+  #content { padding: 12px; }
+  .gauges { gap: 8px; }
+}

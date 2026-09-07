@@ -1,0 +1,69 @@
+,7A2,0,0,1,0,0,,1001,5001,ff,StartDiagnosticSession.Default
+,7A2,0,0,1,0,0,,1002,5002,ff,StartDiagnosticSession.Reprog
+,7A2,0,0,1,0,0,,1003,5003,ff,StartDiagnosticSession.Extended
+,7A2,0,0,1,0,0,,14FFFFFF,54FFFFFF,ff,ClearDiagnosticInformation.All
+,7A2,16,23,1,0,0,,1901FF,5901FF,ff,DTCStatusAvailabilityMask
+,7A2,24,31,1,0,0,,1901FF,5901FF,ff,DTCFormatIdentifier,0:SAE_J2012-DA_DTCFormat;1:ISO_14229-1_DTCFormat;2:SAE_J1939-73_DTCFormat;3:ISO_11992-4_DTCFormat;4:SAE_J2012-DA_WWHOBD_DTCFormat
+,7A2,32,47,1,0,0,,1901FF,5901FF,4ff,DTCCount
+,7A2,16,23,1,0,0,,1902FF,5902FF,ff,DTCStatusAvailabilityMask
+,7A2,24,39,1,0,0,,1902FF,5902FF,ff,DTCDeviceAndFailureTypeOBD
+,7A2,40,43,1,0,0,,1902FF,5902FF,ff,DTCFailureType.ManufacturerOrSupplier
+,7A2,48,48,1,0,0,,1902FF,5902FF,ff,DTCStatus.warningIndicatorRequested
+,7A2,49,49,1,0,0,,1902FF,5902FF,ff,DTCStatus.testNotCompletedThisMonitoringCycle
+,7A2,50,50,1,0,0,,1902FF,5902FF,ff,DTCStatus.testFailedSinceLastClear,0:No;1:Yes
+,7A2,51,51,1,0,0,,1902FF,5902FF,ff,DTCStatus.testNotCompletedSinceLastClear,0:No;1:Yes
+,7A2,52,52,1,0,0,,1902FF,5902FF,ff,DTCStatus.confirmedDTC,0:No;1:Yes
+,7A2,53,53,1,0,0,,1902FF,5902FF,ff,DTCStatus.pendingDTC
+,7A2,54,54,1,0,0,,1902FF,5902FF,ff,DTCStatus.testFailedThisMonitoringCycle
+,7A2,55,55,1,0,0,,1902FF,5902FF,ff,DTCStatus.testFailed,0:No;1:Yes
+,7A2,0,0,1,0,0,,1903000000FF,5903000000FF,ff,ReadDTCInformation.ReportDTCSnapshotIdentification
+,7A2,40,47,1,0,0,,190400000001,590400000001,ff,StatusOfDTC
+,7A2,80,103,1,0,0,km,190400000001,590400000001,ff,Mileage
+,7A2,120,127,1,0,0,,190400000001,590400000001,ff,DTC Occurrence Counter
+,7A2,40,47,1,0,0,,190600000080,590600000080,ff,StatusOfDTC
+,7A2,40,47,1,0,0,,1906000000FF,5906000000FF,ff,StatusOfDTC
+,7A2,16,23,1,0,0,,190A,590A,ff,DTCStatusAvailabilityMask
+,7A2,31,31,1,0,0,,220101,620101,ff,LIN_IN.SystemON,0:System_ON OFF;1:System_ON ON
+,7A2,24,31,.2,0,1,V,220200,620200,ff,Battery level
+,7A2,24,31,1,0,0,,222006,622006,ff,ESE/ANC parameters.ANC activation,0:Not activated;1:Activated
+,7A2,32,39,1,0,0,,222006,622006,ff,ESE/ANC parameters.ESE activation,0:Not activated;1:Activated
+,7A2,24,24,1,0,0,,222100,622100,ff,Car configuration.Centerfill speaker,0:Not present;1:present
+,7A2,25,25,1,0,0,,222100,622100,ff,Car configuration.Twidlers,0:Not Fitted;1:Fitted
+,7A2,26,31,1,0,0,,222100,622100,ff,Car configuration.Welcome Sequence volume level
+,7A2,32,32,1,0,0,,222100,622100,ff,Car configuration.Rear tweeters,0:Not present;1:Present
+,7A2,33,33,1,0,0,,222100,622100,ff,Car configuration.HEVC,0:Not present;1:Present
+,7A2,34,34,1,0,0,,222100,622100,ff,Car configuration.ECM,0:Not present;1:Present
+,7A2,25,25,1,0,0,,222109,622109,ff,Sound volume configuration.CFG_ADAS_RCTA,0:Absent;1:Present
+,7A2,26,26,1,0,0,,222109,622109,ff,Sound volume configuration.CFG_ADAS_SR,0:Absent;1:Present
+,7A2,27,27,1,0,0,,222109,622109,ff,Sound volume configuration.CFG_ADAS_PSM,0:Absent;1:Present
+,7A2,28,29,1,0,0,,222109,622109,ff,Sound volume configuration.CFG_ADAS_APA,0:APA not present;1:HFP present;2:HFPB present;3:APK present
+,7A2,30,31,1,0,0,,222109,622109,ff,Sound volume configuration.CFG_ADAS_UPA_Audio,0:UPA audio not present;1:UPA audio without settings;2:UPA audio with settings
+,7A2,32,39,1,0,0,00h-28h volume step,222109,622109,ff,Sound volume configuration.Ecall_volume
+,7A2,44,45,1,0,0,,222109,622109,ff,Sound volume configuration.CFG_ADAS_LDW,0:LDW not present;1:LDW Sound;2:LDW Haptic
+,7A2,46,47,1,0,0,,222109,622109,ff,Sound volume configuration.Sonar_System_Availability,0:Not available;1:Available
+,7A2,56,63,1,10,0,dB,222109,622109,1ff,Sound volume configuration.ParkingAids_UPA_gain
+,7A2,64,71,1,10,0,dB,222109,622109,1ff,Sound volume configuration.ParkingAids_HFP_gain
+,7A2,72,79,1,10,0,dB,222109,622109,1ff,Sound volume configuration.ParkingAids_PSM_gain
+,7A2,80,87,1,10,0,dB,222109,622109,1ff,Sound volume configuration.LateralADAS_LDW_gain
+,7A2,88,95,1,0,0,00h-28h volume step,222109,622109,ff,Sound volume configuration.Cluster_sound_level
+,7A2,120,127,1,12,0,dB,222109,622109,1ff,Sound volume configuration.Beep_Clic_Level
+,7A2,24,31,1,0,0,,222111,622111,ff,ECU configuration.Speakers,0:Bass Box;1:Subwoofers
+,7A2,32,39,1,0,0,,222111,622111,ff,ECU configuration.ANC microphones,0:Not fitted;1:Fitted
+,7A2,40,47,1,0,0,,222111,622111,ff,ECU configuration.Hand drive,0:Left hand drive (F..);1:Right hand drive (GB..)
+,7A2,24,31,1,0,0,,222112,622112,ff,CAN diversity,0:Slot 0 (Default);1:Slot 1 (C1A);2:Slot 2 (C1R);3:Slot 3 (T4Vs)
+,7A2,24,31,1,0,0,,229002,629002,ff,Loudspeaker
+,7A2,24,31,1,0,0,,229011,629011,ff,IO.Tweeter_result,0:In progress;1:Done and OK;2:Done and NOK
+,7A2,24,103,1,0,0,,22F012,62F012,2ff,Operational Reference
+,7A2,24,47,1,0,0,km,22F0D0,62F0D0,ff,Mileage
+,7A2,24,31,1,0,0,,22F0D1,62F0D1,ff,DTC Occurrence Counter
+,7A2,24,103,1,0,0,,22F187,62F187,2ff,vehicleManufacturerSparePartNumber
+,7A2,24,103,1,0,0,,22F188,62F188,2ff,vehicleManufacturerECUSoftwareNumber
+,7A2,24,47,1,0,0,,22F18A,62F18A,2ff,systemSupplierIdentifier
+,7A2,24,183,1,0,0,,22F18C,62F18C,2ff,ECUSerialNumber
+,7A2,24,159,1,0,0,,22F190,62F190,2ff,VIN
+,7A2,24,103,1,0,0,,22F191,62F191,2ff,vehicleManufacturerECUHardwareNumber
+,7A2,24,279,1,0,0,,22F194,62F194,2ff,systemSupplierECUSoftwareNumber
+,7A2,24,167,1,0,0,,22F195,62F195,2ff,systemSupplierECUSoftwareVersionNumber
+,7A2,24,31,1,0,0,,22F1A0,62F1A0,4ff,diagnosticVersion
+,7A2,24,103,1,0,0,,22F1A1,62F1A1,2ff,VehicleManufacturerSparePartNumber_N
+,7A2,0,0,1,0,0,,3E00,7E00,ff,TesterPresent.WithResponse
