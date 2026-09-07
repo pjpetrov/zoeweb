@@ -89,7 +89,12 @@ this while driving. You alone are responsible for what you send to your car.
 
 ## Running it
 
-It is a static site — any web server works:
+**Easiest**: grab `zoeweb.html` from the [latest release](../../releases/latest) —
+a single self-contained file (app + all vehicle databases). Open it in Chrome or
+Edge and it just runs: demo mode instantly, real cars via a USB or Bluetooth-LE
+ELM327 dongle. Build it yourself with `npm install && npm run build` → `dist/zoeweb.html`.
+
+Otherwise it is a static site — any web server works:
 
 ```bash
 cd zoe

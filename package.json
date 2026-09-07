@@ -1,0 +1,14 @@
+{
+  "name": "zoeweb",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Browser-based CanZE clone for Renault ZE cars",
+  "license": "GPL-3.0",
+  "scripts": {
+    "build": "node build/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "type": "module"
+}

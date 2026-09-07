@@ -3,6 +3,7 @@
  * Data files come verbatim from CanZE (GPL-3.0).
  */
 import { FieldRegistry, parseCsv } from './fields.js';
+import { embeddedAssets } from './embedded.js';
 
 export const CARS = {
   ZOE:          { dir: 'ZOE',          label: 'Zoe Ph1 (Q210/R240/Q90/R90)', ph2: false },
@@ -55,7 +56,15 @@ export class VehicleDb {
 
   async load(baseUrl = 'assets') {
     const dir = `${baseUrl}/${this.car.dir}`;
+    const embedded = embeddedAssets();
     const get = async (name, optional = true) => {
+      if (embedded) {
+        const map = await embedded;
+        const text = map[`${this.car.dir}/${name}`];
+        if (text !== undefined) return text;
+        if (optional) return null;
+        throw new Error(`${name}: missing from embedded assets`);
+      }
       try {
         const r = await fetch(`${dir}/${name}`);
         if (!r.ok) { if (optional) return null; throw new Error(`${name}: HTTP ${r.status}`); }
