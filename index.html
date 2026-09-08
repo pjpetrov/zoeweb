@@ -24,7 +24,16 @@
         <a href="https://github.com/fesch/CanZE" target="_blank" rel="noopener">CanZE</a>
       </footer>
     </nav>
-    <main id="content"></main>
+    <main id="content">
+      <!-- replaced by the app on boot; visible only when JavaScript did not run -->
+      <div class="card" style="max-width:560px;margin:40px auto">
+        <h3>JavaScript is not running</h3>
+        <p class="hint">If you can read this, this file was opened in a viewer that does not
+        execute scripts (for example the iOS Files preview). Open it with Chrome or Edge on a
+        computer — or, on a phone, use the hosted version of ZoeWeb in a real browser instead
+        of the downloaded file.</p>
+      </div>
+    </main>
   </div>
   <script type="module" src="js/main.js"></script>
 </body>
