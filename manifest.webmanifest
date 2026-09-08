@@ -1,0 +1,13 @@
+{
+  "name": "ZoeWeb — Renault ZE diagnostics",
+  "short_name": "ZoeWeb",
+  "description": "CanZE for the browser: live diagnostics and service procedures for Renault ZE cars via an OBD2 dongle",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#10141b",
+  "theme_color": "#1a2029",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -231,6 +231,9 @@ class App {
 const app = new App();
 document.getElementById('menu-btn').addEventListener('click', () =>
   document.getElementById('sidebar').classList.toggle('open'));
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 app.start().catch(e => {
   document.getElementById('status-text').textContent = 'Failed to start: ' + e.message;
   console.error(e);
