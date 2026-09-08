@@ -319,6 +319,79 @@ function clusterTestCard(ctx) {
     log.root);
 }
 
+/* ---------- 4c. TCU / connected-services inspection ---------- */
+
+/*
+ * Read-only inspection of the telematics unit (TCU/DCM, 7CA→7DA). Reads a
+ * union of the GEN2 and AIVC configuration identifiers (from the DDT TCU
+ * files) so it works whichever generation the car has, and shows the SIM,
+ * APN and backend-server settings as text. This is the first step for anyone
+ * looking into the dead Renault connected-services backend: it reveals what
+ * the TCU is, and which backend URL / APN it is pointed at.
+ */
+const TCU_DIDS = [
+  ['22fd1c', 'IMEI (modem id)'],
+  ['22fd30', 'GPRS/APN parameters (GEN2)'],
+  ['226c10', 'OBS backend URL (GEN2)'],
+  ['226d7c', 'KEP server address (GEN2)'],
+  ['226d49', 'IP address (GEN2)'],
+  ['2185', 'network management (GEN2)'],
+  ['22416b', 'backend URL (AIVC)'],
+  ['224201', 'eCall URL (AIVC)'],
+  ['224100', 'off-board server number (AIVC)'],
+  ['220104', 'communication network (AIVC)'],
+  ['224006', 'APN 1 profile 1 (AIVC)'],
+  ['22400c', 'SIM SMS centre (AIVC)'],
+  ['224131', 'WiFi hotspot status (AIVC)'],
+];
+
+function tcuCard(ctx) {
+  const log = makeLog();
+  const exec = runGuard(ctx, log);
+  const table = reportTable();
+  const tcu = () => ctx.db.ecuByMnemonic('TCU') || ctx.db.ecuByMnemonic('DCM');
+
+  const ascii = hex => {
+    let out = '';
+    for (let i = 0; i + 2 <= hex.length; i += 2) {
+      const c = parseInt(hex.substring(i, i + 2), 16);
+      out += (c >= 32 && c < 127) ? String.fromCharCode(c) : '';
+    }
+    return out.replace(/\0+$/, '').trim();
+  };
+
+  const runBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
+    table.clear();
+    const ecu = tcu();
+    if (!ecu) { log.line('err', '! no TCU in this car database'); return; }
+    await ctx.uds.startSession(ecu).catch(() => {});
+    let answered = 0;
+    for (const [did, label] of TCU_DIDS) {
+      try {
+        const payload = await ctx.uds.raw(ecu, did.length === 4 ? '22' + did : did, { timeout: 2500 });
+        const data = payload.substring(did.length === 4 ? 4 : 6);
+        const text = ascii(data);
+        table.add(label, text || data.toUpperCase() || '(empty)', text ? '' : did.toUpperCase());
+        answered++;
+      } catch (_) { /* DID not on this TCU generation — skip quietly */ }
+    }
+    log.line(answered ? 'rx' : 'err',
+      answered ? `✓ ${answered} parameter(s) read — the ones that answered tell you the TCU generation`
+               : '! the TCU did not answer (asleep, or not present)');
+  }) }, 'Read TCU / SIM config');
+
+  return section('TCU / connected-services inspection (read-only)',
+    el('p', { class: 'hint' },
+      'Reads the telematics unit\u2019s SIM, APN and backend-server settings. Renault shut down the Zoe\u2019s ' +
+      'connected-services backend, so remote A/C and remote charge no longer work. Retargeting the TCU to a ' +
+      'different backend is technically possible — the URL/APN/server identifiers here are writable (via the Pro ' +
+      'console, and every write is backed up in Backups) — BUT it only helps if a REPLACEMENT server that speaks ' +
+      'Renault\u2019s telematics protocol exists to point it at; changing the URL alone will not revive the features. ' +
+      'Note: the eCall (emergency) URL is safety-related — do not disturb it. This card is read-only.'),
+    el('div', { class: 'toolbar' }, runBtn, copyButton(() => table.text('ZoeWeb TCU inspection'))),
+    table.root, log.root);
+}
+
 /* ---------- 5. ECU identification report ---------- */
 
 function ecuIdCard(ctx) {
@@ -862,6 +935,7 @@ export class ServiceScreen extends Screen {
       clusterPrefsCard(ctx),
       clusterFeaturesCard(ctx),
       androidAutoCard(ctx),
+      tcuCard(ctx),
       ecuIdCard(ctx),
     );
   }
