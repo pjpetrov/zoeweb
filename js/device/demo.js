@@ -97,6 +97,14 @@ export class DemoTransport {
     const svc = requestId.substring(0, 2);
     const frameIdHex = this._filter;
 
+    // A real car only answers on addresses of ECUs it actually has. Staying
+    // silent for unknown addresses makes the demo a faithful test bed for
+    // car auto-detection (e.g. a Zoe Ph1 demo won't answer 29-bit ZE50 ids).
+    const knownEcu = this.db?.ecuByFromId(frameIdHex);
+    const knownReq = this.db && [...this.db.registry.diagRequests.keys()]
+      .some(k => k.startsWith(frameIdHex + '.'));
+    if (this.db && !knownEcu && !knownReq) return; // no such ECU → no response
+
     if (svc === '3e') { this._sendIsoTp('7e00'); return; }               // tester present
     if (svc === '10') { this._sendIsoTp('50' + requestId.substring(2)); return; } // session
     if (svc === '14') {                                                   // clear DTCs
