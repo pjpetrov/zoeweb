@@ -1,5 +1,8 @@
 # ZoeWeb — CanZE for the browser
 
+**▶ Try it live: <https://pjpetrov.github.io/zoeweb/>** — demo mode works in any
+browser, no car needed; with an ELM327 dongle it connects to a real one.
+
 A web clone of [CanZE](https://github.com/fesch/CanZE) ("take a closer look at your ZE car"):
 live diagnostics for Renault ZE electric cars (Zoe Ph1, Zoe Ph2/ZE50, Twingo III Electric, Twizy)
 running entirely in the browser — no app install, served as a static website.
