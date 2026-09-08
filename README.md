@@ -4,10 +4,11 @@ A web clone of [CanZE](https://github.com/fesch/CanZE) ("take a closer look at y
 live diagnostics for Renault ZE electric cars (Zoe Ph1, Zoe Ph2/ZE50, Twingo III Electric, Twizy)
 running entirely in the browser — no app install, served as a static website.
 
-It talks to a cheap ELM327-compatible OBD2 dongle over **Web Serial** (USB) or
-**Web Bluetooth** (BLE), and reuses CanZE's actual vehicle databases (~40 000 field
-definitions, ECU maps, and fault-code catalogs) so it can decode the same data the
-Android app can.
+It talks to a cheap ELM327-compatible OBD2 dongle over **Web Serial** (USB, and
+macOS-paired Bluetooth), **Web Bluetooth** (BLE dongles), or a bundled **WebSocket
+bridge** for classic-SPP dongles — and reuses CanZE's actual vehicle databases
+(~40 000 field definitions, ECU maps, and fault-code catalogs) so it can decode
+the same data the Android app can.
 
 ## Screenshots
 
@@ -36,12 +37,13 @@ Android app can.
 | Climate | climate power, refrigerant pressure, loop modes, battery conditioning |
 | Tires | TPMS pressures and states per wheel |
 | Braking | brake blending: driver request vs regen vs friction |
-| Fault codes | read DTCs per ECU or scan the whole car, decoded with CanZE's DTC catalogs |
+| Fault codes | read DTCs per ECU or scan the whole car, decoded with CanZE's DTC catalogs; separates real faults from "self-test not yet run" entries |
 | All data | browse and live-poll *every* known field of any ECU, with search |
 
 ## Beyond CanZE — Service procedures
 
-The **Service** screen offers guided procedures for the Zoe Ph1 / ZE40:
+The **Service** screen offers guided procedures for the Zoe Ph1 / ZE40, in the
+order they appear in the app:
 
 - **HV battery health report** — SOH, all 96 cell voltages with spread analysis,
   balancing activity, lifetime kWh/km counters, serial number; copy-to-clipboard
@@ -53,16 +55,15 @@ The **Service** screen offers guided procedures for the Zoe Ph1 / ZE40:
 - **Water pump counter reset** ("Check Electric System" / DTC 0463) — reads the four
   EVC wear counters (`3349`/`334A`/`334B`/`3531`), then after typed confirmation
   zeroes them via `2E` writes, clears the DTC and verifies (per cedricp/ddtplugins PR #8)
+- **Odometer / mileage check** — compares the three independent mileage counters
+  (EVC, cluster, battery) plus the km/miles setting, and diagnoses why a dash may
+  show the wrong number: unit mismatch, lagging cluster, donor cluster (read-only)
 - **TPMS reference pressures** — the per-wheel pressure/temperature references the
-  BCM has learned (read-only)
-- **ECU identification report** — software/version numbers of every reachable ECU,
-  copyable; snapshot before a dealer visit, compare after
-
-- **Cluster preferences** — the classic DDT4All cluster tweaks, driven by the
-  verified `Config Generale` identifiers: enable the clock (12/24 h) and outside
-  temperature on the dash, switch km/miles, bar/PSI, cluster language, indicator
-  sound. Reads current values first; every write is verified by read-back.
-
+  cluster has learned (read-only)
+- **Cluster preferences** — the classic DDT4All cluster tweaks via the verified
+  `Config Generale` identifiers: clock (12/24 h), outside temperature, km/miles,
+  bar/PSI, language, indicator sound, overspeed warning, rear wiper on reverse.
+  Reads current values first; every write is verified by read-back.
 - **Cluster feature flags** — TPMS on/off (the winter-wheels tweak), cruise
   control/limiter, park assist, climate, heated seats, TCU, auto headlights,
   navigation presence.
@@ -71,6 +72,8 @@ The **Service** screen offers guided procedures for the Zoe Ph1 / ZE40:
   read-back verification and rollback. Requires the rewired OBD cable (ELM pin
   6 → car pin 13, pin 14 → car pin 12: R-Link lives on the multimedia CAN) and
   up-to-date R-Link firmware.
+- **ECU identification report** — software/version numbers of every reachable ECU,
+  copyable; snapshot before a dealer visit, compare after.
 
 Body-computer (BCM) tweaks from the forums — auto door locking, DRL behaviour,
 mirror folding — are deliberately NOT included: the BCM's configuration layout
@@ -154,9 +157,12 @@ js/core/poller.js         interval scheduler; groups fields into frame requests
 js/core/uds.js            DTC read/clear, sessions, DID read/write, routines
 js/core/virtual.js        computed fields (DC power, instant consumption, …)
 js/device/elm327.js       ELM327 driver: init, free frames (atma), ISO-TP framing
-js/device/transport.js    Web Serial + Web Bluetooth transports
+js/core/embedded.js       asset store for the single-file build (gzip in the HTML)
+js/device/transport.js    Web Serial, Web Bluetooth (BLE) and WebSocket transports
 js/device/demo.js         a virtual ELM327+Zoe synthesized from the field database
-js/screens/*, js/ui/*     the screens and widgets
+js/screens/*, js/ui/*     the screens and widgets (Service, Pro console, …)
+tools/spp-bridge.py       relay for classic Bluetooth (SPP) dongles
+build/build.mjs           single-file build (esbuild bundle + embedded databases)
 ```
 
 The protocol flow is a direct port of CanZE's `ELM327.java`: `atcaf0` manual
