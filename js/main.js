@@ -44,7 +44,9 @@ class SettingsScreen extends Screen {
     const isChromium = !!window.chrome;
     const whyNot = api => {
       if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        return 'impossible on iOS — Apple allows no browser (Chrome included) to access Bluetooth or serial';
+        return api === 'serial'
+          ? 'impossible on iOS — Apple allows no browser access to serial ports'
+          : 'blocked in iOS browsers (Chrome included) — install the free "Bluefy" browser from the App Store and open this page there';
       }
       if (!window.isSecureContext) return 'page must be served over https:// or localhost';
       if (!isChromium) return 'needs a Chromium browser (Chrome, Edge, Brave…) — Firefox/Safari don’t implement it';
