@@ -329,20 +329,28 @@ function clusterTestCard(ctx) {
  * looking into the dead Renault connected-services backend: it reveals what
  * the TCU is, and which backend URL / APN it is pointed at.
  */
+// DIDs verified against the DDT TCU definitions. GEN2 (Ficosa, 7CA/7DA) is the
+// Zoe's; AIVC entries are kept for other generations. Config reads need the
+// extended session (10C0) — which the card starts first.
 const TCU_DIDS = [
+  ['22f190', 'VIN'],
+  ['22f194', 'ECU software version'],
+  ['22f192', 'ECU hardware version'],
   ['22fd1c', 'IMEI (modem id)'],
-  ['22fd30', 'GPRS/APN parameters (GEN2)'],
-  ['226c10', 'OBS backend URL (GEN2)'],
-  ['226d7c', 'KEP server address (GEN2)'],
-  ['226d49', 'IP address (GEN2)'],
-  ['2185', 'network management (GEN2)'],
+  ['226c95', 'SIM ISDN (car phone number)'],
+  ['22fd70', 'communication network name'],
+  ['22fd71', 'registered to network'],
+  ['22fd30', 'GPRS / APN parameters'],
+  ['226c24', 'SIM SMS centre'],
+  ['226c10', 'OBS backend URL'],
+  ['226d7c', 'KEP server address'],
+  ['226d49', 'IP address'],
+  ['226d50', 'PPP session latch-up'],
+  ['226d01', 'WiFi module network name'],
+  // other-generation (AIVC) identifiers, tried too in case the TCU differs
   ['22416b', 'backend URL (AIVC)'],
   ['224201', 'eCall URL (AIVC)'],
-  ['224100', 'off-board server number (AIVC)'],
-  ['220104', 'communication network (AIVC)'],
-  ['224006', 'APN 1 profile 1 (AIVC)'],
-  ['22400c', 'SIM SMS centre (AIVC)'],
-  ['224131', 'WiFi hotspot status (AIVC)'],
+  ['224006', 'APN 1 (AIVC)'],
 ];
 
 function tcuCard(ctx) {
@@ -360,23 +368,37 @@ function tcuCard(ctx) {
     return out.replace(/\0+$/, '').trim();
   };
 
-  // universal identifiers almost every UDS ECU answers — used to prove the
-  // TCU is reachable at all before blaming a specific config DID
+  // identifiers the Ficosa TCU actually supports (from its DDT def) — used to
+  // prove reachability before reading config
   const IDENT_DIDS = [
-    ['22f190', 'VIN'], ['22f18c', 'ECU serial number'],
-    ['22f1a0', 'diagnostic spec version'], ['22f194', 'supplier ECU sw number'],
+    ['22f190', 'VIN'], ['22f194', 'ECU software'], ['22fd1c', 'IMEI'],
   ];
 
   /** Try to wake a sleeping TCU: tester-present flood + session, a few times. */
   const wake = async ecu => {
     for (let i = 0; i < 5; i++) {
       await ctx.uds.raw(ecu, '3e00', { timeout: 500 }).catch(() => {});
-      const ok = await ctx.uds.raw(ecu, '1003', { timeout: 800 }).catch(() =>
-        ctx.uds.raw(ecu, '10c0', { timeout: 800 }).catch(() => null));
+      // the TCU's real sessions (DDT): 10c0 extended, 1081 default
+      const ok = await ctx.uds.raw(ecu, '10c0', { timeout: 800 }).catch(() =>
+        ctx.uds.raw(ecu, '1081', { timeout: 800 }).catch(() => null));
       if (ok) return true;
     }
     return false;
   };
+
+  /** Reboot the TCU (ECUReset.hardReset 1101) — the DDT4All 'stuck TCU' fix. */
+  const rebootBtn = el('button', { class: 'btn danger', onclick: () => exec(async () => {
+    const ecu = tcu();
+    if (!ecu) { log.line('err', '! no TCU in this car database'); return; }
+    if (!confirm('Reboot the TCU (ECU hard reset)?\n\nSafe and non-persistent — it just restarts the ' +
+      'telematics modem, the fix owners use when the TCU stops talking to the network. Car in READY.')) return;
+    await ctx.uds.startSession(ecu).catch(() => {});
+    log.line('tx', '> ECUReset.hardReset (1101)');
+    try {
+      const r = await ctx.uds.raw(ecu, '1101', { timeout: 3000 });
+      log.line('rx', '< ' + r + ' — TCU rebooting, give it ~30-60 s to re-register');
+    } catch (e) { log.line('err', '! ' + e.message); }
+  }) }, 'Reboot TCU');
 
   const runBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
     table.clear();
@@ -429,7 +451,7 @@ function tcuCard(ctx) {
       'an OVMS module (docs.openvehicles.com, Renault Zoe Ph1). The Zoe TCU is a Ficosa / Sierra Wireless ' +
       'AirPrime unit; the opencarwings project revives Ficosa TCUs on the Nissan Leaf, but Zoe compatibility is ' +
       'unconfirmed. The eCall (emergency) URL is safety-related — leave it alone.'),
-    el('div', { class: 'toolbar' }, runBtn, copyButton(() => table.text('ZoeWeb TCU inspection'))),
+    el('div', { class: 'toolbar' }, runBtn, rebootBtn, copyButton(() => table.text('ZoeWeb TCU inspection'))),
     table.root, log.root);
 }
 
