@@ -97,6 +97,15 @@ on your own car only):
 - **RoutineControl** (service `31`) for actuator tests and resets
 - **Raw UDS console** with a full request/response traffic log
 
+### Backups & restore
+
+Every parameter the app writes — cluster settings, TPMS/feature flags, the water
+pump reset, R-Link config, and Pro-console `2E` writes — is recorded first: the
+app reads the **old value**, saves it, then writes. The **Backups** screen lists
+every change with its original value and a one-click **Restore**. The list is
+kept on the device across sessions, so you can always put a setting back the way
+it was, even weeks later.
+
 ⚠️ **Writes and routines are executed exactly as you type them.** A wrong write can
 misconfigure or permanently damage an ECU. Know your Renault DDT parameter
 documentation before writing anything, keep the car stationary, and never use

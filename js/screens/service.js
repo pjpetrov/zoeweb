@@ -10,6 +10,7 @@
  */
 import { Screen } from './screens.js';
 import { el, section } from '../ui/widgets.js';
+import { journaledWrite } from '../core/journal.js';
 
 /* ---------- shared helpers ---------- */
 
@@ -355,8 +356,8 @@ function waterPumpCard(ctx) {
       await ctx.uds.startSession(ecu);
       for (const did of ['3349', '334a', '334b', '3531']) {
         log.line('tx', `> 2E ${did.toUpperCase()} 00000000`);
-        await ctx.uds.writeDid(ecu, did, '00000000');
-        log.line('rx', '< ok');
+        await journaledWrite(ctx, ecu, did, '00000000', 'Water pump driving counter ' + did.toUpperCase());
+        log.line('rx', '< ok (backed up)');
       }
       log.line('tx', '> clear stored DTCs (14 FFFFFF)');
       await ctx.uds.clearDtcs(ecu).catch(e => log.line('err', '! DTC clear: ' + e.message));
@@ -412,8 +413,8 @@ function waterPumpExtras(ctx, ecu, log, exec) {
       await ctx.uds.startSession(ecu);
       for (const did of ['334d', '334e', '334f', '3530']) {
         log.line('tx', `> 2E ${did.toUpperCase()} 00000000`);
-        await ctx.uds.writeDid(ecu, did, '00000000');
-        log.line('rx', '< ok');
+        await journaledWrite(ctx, ecu, did, '00000000', 'Water pump charge counter ' + did.toUpperCase());
+        log.line('rx', '< ok (backed up)');
       }
       log.line('rx', '✓ charge-pump counters reset');
     });
@@ -566,13 +567,12 @@ function tdbPrefsCard(ctx, title, hint, prefs) {
         'log for rollback. Ignition on, car stationary.')) return;
       await exec(async () => {
         await ctx.uds.startSession(tdb());
-        const before = await readByte(pref.did).catch(() => null);
-        log.line('tx', `> ${pref.label}: ${before === null ? '?' : nameOf(pref, before)} → ${nameOf(pref, v)} (2E ${pref.did} ${v.toString(16).padStart(2, '0')})`);
-        await ctx.uds.writeDid(tdb(), pref.did, v.toString(16).padStart(2, '0'));
-        const after = await readByte(pref.did);
+        log.line('tx', `> ${pref.label} → ${nameOf(pref, v)} (2E ${pref.did} ${v.toString(16).padStart(2, '0')})`);
+        const hex = await journaledWrite(ctx, tdb(), pref.did, v.toString(16).padStart(2, '0'), 'Cluster: ' + pref.label);
+        const after = parseInt(hex, 16);
         cur.textContent = nameOf(pref, after);
         log.line(after === v ? 'rx' : 'err',
-          after === v ? `✓ verified: ${nameOf(pref, after)} — cycle the ignition to see it on the dash`
+          after === v ? `✓ verified: ${nameOf(pref, after)} — backed up (Backups screen); cycle the ignition to see it`
                       : `! read-back shows ${nameOf(pref, after)} — the cluster refused or remapped the value`);
       });
     } }, 'Apply ⚠');
@@ -709,8 +709,8 @@ function androidAutoCard(ctx) {
       'Afterwards restart the R-Link (Home button 5×).')) return;
     await exec(async () => {
       await ctx.uds.startSession(ecu);
-      await ctx.uds.writeDid(ecu, '6c1c', hex);
-      const back = parseInt((await ctx.uds.raw(ecu, '226c1c')).substring(6, 8), 16);
+      const rb = await journaledWrite(ctx, ecu, '6c1c', hex, 'R-Link phone projection (6C1C)');
+      const back = parseInt(rb.substring(0, 2), 16);
       current.textContent = '0x' + back.toString(16).padStart(2, '0').toUpperCase();
       log.line(back === value ? 'rx' : 'err', back === value
         ? '✓ verified — restart the R-Link (Home 5×), then connect the phone via USB'

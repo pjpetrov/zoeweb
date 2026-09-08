@@ -10,6 +10,7 @@
  */
 import { Screen } from './screens.js';
 import { el, section } from '../ui/widgets.js';
+import { journaledWrite } from '../core/journal.js';
 
 export class ProScreen extends Screen {
   constructor() { super('pro', 'Pro console', '🛠️'); }
@@ -81,7 +82,8 @@ export class ProScreen extends Screen {
         if (answer?.trim().toUpperCase() !== phrase) { logLine('err', '! write cancelled'); return; }
         await exec(`WRITE DID ${did} = ${data}`, async () => {
           await ctx.uds.startSession(ecu).catch(() => {});
-          return ctx.uds.raw(ecu, '2e' + did + data);
+          const back = await journaledWrite(ctx, ecu, did, data, `Pro console write ${did}`);
+          return '6e' + did + ' (backed up → Backups screen); read-back ' + back;
         });
       } }, 'Write (2E) ⚠'));
 

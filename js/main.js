@@ -5,6 +5,7 @@ import { VehicleDb, CARS } from './core/ecus.js';
 import { Poller } from './core/poller.js';
 import { Uds } from './core/uds.js';
 import { detectCar } from './core/detect.js';
+import { WriteJournal } from './core/journal.js';
 import { createVirtualFields } from './core/virtual.js';
 import { Elm327 } from './device/elm327.js';
 import { SerialTransport, BleTransport, WsTransport } from './device/transport.js';
@@ -17,6 +18,7 @@ import {
 import { DtcScreen } from './screens/dtc.js';
 import { AllDataScreen } from './screens/alldata.js';
 import { ProScreen } from './screens/pro.js';
+import { BackupsScreen } from './screens/backups.js';
 import { ServiceScreen } from './screens/service.js';
 
 export const APP_VERSION = '2026-09-08.1';
@@ -118,7 +120,7 @@ class App {
     this.screens = [
       new DashboardScreen(), new DrivingScreen(), new BatteryScreen(), new ChargingScreen(),
       new RangeScreen(), new ConsumptionScreen(), new ClimateScreen(), new TiresScreen(),
-      new BrakingScreen(), new DtcScreen(), new ServiceScreen(), new AllDataScreen(), new ProScreen(), new SettingsScreen(),
+      new BrakingScreen(), new DtcScreen(), new ServiceScreen(), new BackupsScreen(), new AllDataScreen(), new ProScreen(), new SettingsScreen(),
     ];
     this.current = null;
     this.transport = null;
@@ -127,6 +129,7 @@ class App {
     this.poller = null;
     this.uds = null;
     this.connected = false;
+    this.journal = new WriteJournal();
   }
 
   async start() {
