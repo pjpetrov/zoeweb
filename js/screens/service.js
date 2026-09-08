@@ -485,6 +485,61 @@ function odometerCard(ctx) {
     table.root, log.root);
 }
 
+/* ---------- 7b. Maintenance / service reminder ---------- */
+
+/*
+ * Cluster service-interval reminder (verified against TdB_X10):
+ *   22 0201 = configured interval (km @ bytes 0-1, days @ 2-3)
+ *   22 0202 = remaining until next service   22 2603 = value shown on dash
+ * Resetting after a service = copy the interval (0201) into the current
+ * countdown (0202). Uses the car's OWN configured interval, and is journaled.
+ */
+function maintenanceCard(ctx) {
+  const log = makeLog();
+  const exec = runGuard(ctx, log);
+  const tdb = () => ctx.db.ecuByMnemonic('TDB');
+  const table = reportTable();
+  let initHex = null;
+
+  const parse = hex => ({ km: parseInt(hex.substring(0, 4), 16), days: parseInt(hex.substring(4, 8), 16) });
+
+  const readBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
+    table.clear();
+    await ctx.uds.startSession(tdb()).catch(() => {});
+    initHex = (await ctx.uds.raw(tdb(), '220201')).substring(6, 14);
+    const cur = (await ctx.uds.raw(tdb(), '220202')).substring(6, 14);
+    const i = parse(initHex), c = parse(cur);
+    let odo = null;
+    try { odo = parseInt((await ctx.uds.raw(tdb(), '220206')).substring(6, 12), 16); } catch (_) {}
+    table.add('Service interval (configured)', `${i.km} km / ${i.days} days`);
+    table.add('Remaining until service', `${c.km} km / ${c.days} days`,
+      c.km <= 0 || c.days <= 0 ? 'DUE now' : '');
+    if (odo != null) table.add('Odometer', odo + ' km');
+    log.line('rx', `interval=${initHex} current=${cur}`);
+  }) }, 'Read service status');
+
+  const resetBtn = el('button', { class: 'btn danger', onclick: async () => {
+    if (initHex === null) { log.line('err', '! read the service status first'); return; }
+    if (!confirm('Reset the service reminder to a full interval?\n\n' +
+      `This sets the countdown to the car's configured ${parse(initHex).km} km / ${parse(initHex).days} days. ` +
+      'Do this only after you have actually done the service. Backed up for restore.')) return;
+    await exec(async () => {
+      await ctx.uds.startSession(tdb());
+      await journaledWrite(ctx, tdb(), '0202', initHex, 'Service reminder reset');
+      log.line('rx', '✓ service reminder reset — verifying…');
+    });
+    await readBtn.onclick();
+  } }, 'Reset service reminder ⚠');
+
+  return section('Maintenance / service reminder',
+    el('p', { class: 'hint' },
+      'Reads the cluster\u2019s service-interval countdown and resets it after you service the car (annual ' +
+      'service, brake fluid, cabin filter…). The reset uses the interval the car itself is configured with, ' +
+      'and is recorded in Backups so it can be undone.'),
+    el('div', { class: 'toolbar' }, readBtn, resetBtn),
+    table.root, log.root);
+}
+
 /* ---------- 8. Cluster preferences & feature flags ---------- */
 
 /*
@@ -755,6 +810,7 @@ export class ServiceScreen extends Screen {
       chargeFixCard(ctx),
       waterPumpCard(ctx),
       odometerCard(ctx),
+      maintenanceCard(ctx),
       tpmsCard(ctx),
       clusterPrefsCard(ctx),
       clusterFeaturesCard(ctx),
