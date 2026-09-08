@@ -4,6 +4,7 @@
 import { VehicleDb, CARS } from './core/ecus.js';
 import { Poller } from './core/poller.js';
 import { Uds } from './core/uds.js';
+import { detectCar } from './core/detect.js';
 import { createVirtualFields } from './core/virtual.js';
 import { Elm327 } from './device/elm327.js';
 import { SerialTransport, BleTransport, WsTransport } from './device/transport.js';
@@ -29,6 +30,8 @@ const settings = {
   set baud(v) { localStorage.setItem('zoe.baud', String(v)); },
   get wsUrl() { return localStorage.getItem('zoe.wsurl') || 'ws://localhost:8472'; },
   set wsUrl(v) { localStorage.setItem('zoe.wsurl', v); },
+  get autoDetect() { return localStorage.getItem('zoe.autodetect') !== '0'; },
+  set autoDetect(v) { localStorage.setItem('zoe.autodetect', v ? '1' : '0'); },
 };
 
 class SettingsScreen extends Screen {
@@ -74,7 +77,19 @@ class SettingsScreen extends Screen {
       baudSel.append(el('option', { value: b, ...(settings.baud === b ? { selected: '' } : {}) }, b + ' Bd'));
     }
     c.append(
-      section('Vehicle', el('div', { class: 'toolbar' }, el('label', {}, 'Car model'), carSel)),
+      section('Vehicle',
+        el('div', { class: 'toolbar' }, el('label', {}, 'Car model'), carSel),
+        el('div', { class: 'toolbar' }, el('label', {}, 'Auto-detect on connect'),
+          (() => {
+            const cb = el('input', { type: 'checkbox', onchange: e => { settings.autoDetect = e.target.checked; } });
+            cb.checked = settings.autoDetect;
+            return el('label', { style: 'min-width:0' }, cb, ' identify the car from its ECUs and switch automatically');
+          })()),
+        el('div', { class: 'toolbar' }, el('label', {}, ''),
+          el('button', { class: 'btn', onclick: async () => {
+            if (!app.connected || app.transport instanceof DemoTransport) { app.setStatus('Connect to a real car first to detect it.', 'warn'); return; }
+            await app.poller.pause(); try { await app.autoDetectCar(); } finally { app.poller.resume(); }
+          } }, 'Detect car now'))),
       section('Dongle',
         el('div', { class: 'toolbar' }, el('label', {}, 'Connection'), trSel),
         el('div', { class: 'toolbar' }, el('label', {}, 'Serial baud rate'), baudSel),
@@ -183,6 +198,9 @@ class App {
       this.connected = true;
       this.$connBtn.textContent = 'Disconnect';
       this.$connBtn.classList.add('connected');
+      if (settings.autoDetect && !(this.transport instanceof DemoTransport)) {
+        await this.autoDetectCar();
+      }
       this.poller.start();
       this.setStatus(`Connected — ${this.transport.info}`);
     } catch (e) {
@@ -190,6 +208,36 @@ class App {
       try { await this.transport?.disconnect(); } catch (_) {}
       this.connected = false;
     }
+  }
+
+  /** Probe the bus and switch to the detected car's database if it differs. */
+  async autoDetectCar() {
+    this.setStatus('Identifying car…');
+    let result;
+    try {
+      result = await detectCar(this.elm, msg => this.setStatus('Identifying car — ' + msg));
+    } catch (e) {
+      this.setStatus('Auto-detect failed (' + (e?.message || e) + ') — using ' + CARS[settings.car].label, 'warn');
+      return;
+    }
+    if (!result.car) {
+      this.setStatus(`Could not identify the car automatically — using ${CARS[settings.car].label}. Set it in Settings if wrong.`, 'warn');
+      return;
+    }
+    if (result.car === settings.car) {
+      this.setStatus(`Detected ${CARS[result.car].label} ✓`);
+      return;
+    }
+    // switch database, keeping the live connection
+    settings.car = result.car;
+    this.db = await new VehicleDb(result.car).load();
+    this.poller = new Poller(this.db, this.elm);
+    for (const vf of createVirtualFields()) this.poller.registerVirtual(vf);
+    this.uds = new Uds(this.elm);
+    this.poller.onError = (job, e) => this.setStatus(`${job.key}: ${e.message}`, 'warn');
+    this.poller.onActivity = () => this.blink();
+    if (this.current) { const cur = this.current; this.current = null; this.show(cur.id); }
+    this.setStatus(`Auto-detected ${CARS[result.car].label} — database switched.`);
   }
 
   async disconnect() {

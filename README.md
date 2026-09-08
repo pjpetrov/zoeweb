@@ -168,9 +168,12 @@ Screen" works for that — but a real car connection on iOS only works inside
 Bluefy (or a native wrapper app built with Capacitor + a BLE plugin, which
 requires an Apple developer account to distribute).
 
-Select your car (Zoe Ph1 / Zoe Ph2 / Twingo III / Twizy) in Settings, plug the
-dongle into the OBD2 port, switch the ignition on, then press **Connect**.
-Add `?autoconnect` to the URL to connect automatically on load.
+Plug the dongle into the OBD2 port, switch the ignition on, then press
+**Connect**. On connect the app **auto-detects which car it is** (Zoe Ph1 /
+Zoe Ph2 / Twingo III / Twizy) by probing each platform's signature ECUs and
+loads the matching database — no manual selection needed. You can turn this off,
+force a model, or re-run detection ("Detect car now") in Settings. Add
+`?autoconnect` to the URL to connect automatically on load.
 
 ## How it works
 
