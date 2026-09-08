@@ -141,7 +141,27 @@ directly reachable from any browser.** Two ways to use one anyway:
   `ws://localhost:8472`; `--loopback` runs a self-test without hardware.
 
 Otherwise use a BLE dongle (Vgate iCar Pro BLE 4.0, vLinker MC+, OBDLink CX) or USB.
-On iOS, no browser supports Web Bluetooth/Serial; use the demo mode only.
+
+### iPhone / iPad (iOS)
+
+Apple forbids every iOS browser — Chrome and Safari included — from accessing
+Bluetooth or serial ports, so the connection options are greyed out there and no
+setting can change that. The working recipe on iOS is:
+
+1. Use a **Bluetooth LE dongle** (e.g. Vgate iCar Pro **BLE 4.0** — the variant
+   whose box says "for iOS & Android"; classic-Bluetooth and WiFi dongles cannot
+   work at all).
+2. Install the free **Bluefy** browser from the App Store ("Bluefy – Web BLE
+   Browser") — a browser that implements Web Bluetooth on iOS itself.
+3. Open the **hosted** ZoeWeb URL in Bluefy (GitHub Pages or any https host —
+   not the downloaded single file), go to Settings → connection
+   **"Bluetooth LE ELM327"**, press **Connect** and pick the dongle
+   (Vgate advertises as "IOS-Vlink"). No OS-level pairing is needed.
+
+Plain Safari/Chrome on iOS can still run the **demo mode**, and "Add to Home
+Screen" works for that — but a real car connection on iOS only works inside
+Bluefy (or a native wrapper app built with Capacitor + a BLE plugin, which
+requires an Apple developer account to distribute).
 
 Select your car (Zoe Ph1 / Zoe Ph2 / Twingo III / Twizy) in Settings, plug the
 dongle into the OBD2 port, switch the ignition on, then press **Connect**.
