@@ -182,12 +182,34 @@ export class BleTransport {
   get info() { return `Bluetooth LE (${this._name || 'not connected'})`; }
 
   async connect() {
-    this.device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: BLE_CANDIDATE_SERVICES,
-    });
+    const errText = e => e?.message || e?.name || (e ? String(e) : 'unknown error');
+    try {
+      this.device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: BLE_CANDIDATE_SERVICES,
+      });
+    } catch (e1) {
+      // Bluefy and some other Web-BLE implementations reject acceptAllDevices —
+      // retry with explicit filters (common dongle names + known services)
+      const filters = [
+        ...['IOS-Vlink', 'vLink', 'V-LINK', 'VLink', 'OBD', 'ELM', 'iCar', 'IOS-', 'KONNWEI', 'Veepeak', 'VEEPEAK']
+          .map(namePrefix => ({ namePrefix })),
+        ...BLE_CANDIDATE_SERVICES.map(s => ({ services: [s] })),
+      ];
+      try {
+        this.device = await navigator.bluetooth.requestDevice({ filters, optionalServices: BLE_CANDIDATE_SERVICES });
+      } catch (e2) {
+        throw new Error('Bluetooth picker failed: ' + errText(e2) +
+          (errText(e1) !== errText(e2) ? ` (first attempt: ${errText(e1)})` : ''));
+      }
+    }
     this._name = this.device.name || this.device.id;
-    const server = await this.device.gatt.connect();
+    let server;
+    try {
+      server = await this.device.gatt.connect();
+    } catch (e) {
+      throw new Error('GATT connect failed: ' + (e?.message || e?.name || e || 'unknown error'));
+    }
 
     let services = [];
     try { services = await server.getPrimaryServices(); } catch (_) {}

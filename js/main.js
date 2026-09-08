@@ -184,7 +184,7 @@ class App {
       this.poller.start();
       this.setStatus(`Connected — ${this.transport.info}`);
     } catch (e) {
-      this.setStatus('Connection failed: ' + e.message, 'warn');
+      this.setStatus('Connection failed: ' + (e?.message || e?.name || (e ? String(e) : 'unknown error')), 'warn');
       try { await this.transport?.disconnect(); } catch (_) {}
       this.connected = false;
     }
