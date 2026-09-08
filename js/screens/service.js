@@ -373,8 +373,53 @@ function waterPumpCard(ctx) {
       'runs), reset the counters — same operations dealers and DDT4All perform. Resetting without checking the pump ' +
       'only hides a real warning: a seized pump can overheat the motor and charger.'),
     el('div', { class: 'toolbar' },
-      el('button', { class: 'btn', onclick: readCounters }, 'Read counters'), resetBtn),
+      el('button', { class: 'btn', onclick: readCounters }, 'Read counters'), resetBtn,
+      waterPumpExtras(ctx, ecu, log, exec)),
     el('div', { class: 'scroll-x' }, table), log.root);
+}
+
+/*
+ * Read-only pump health + opt-in charge-pump reset. All DIDs verified against
+ * the EVC DDT definition (223386 pump lifetime, 223318/2233E6 driving feedback,
+ * 223319/2233E5 charge feedback; charge counters 334D/334E/334F/3530). The
+ * tested driving-counter reset above is deliberately left untouched.
+ */
+function waterPumpExtras(ctx, ecu, log, exec) {
+  const checkBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
+    await ctx.uds.startSession(ecu).catch(() => {});
+    for (const [did, label] of [
+      ['223386', 'pump lifetime (VPM memory)'],
+      ['223318', 'driving pump feedback'],
+      ['2233e6', 'driving WEP feedback diag'],
+      ['223319', 'charge pump feedback'],
+      ['2233e5', 'charge WEP feedback diag'],
+    ]) {
+      try {
+        const hex = (await ctx.uds.raw(ecu, did)).substring(6);
+        log.line('rx', `${label}: ${hex} (${parseInt(hex, 16)})`);
+      } catch (e) { log.line('err', `! ${did}: ${e.message}`); }
+    }
+    log.line('hint', 'feedback ≠ 0 while the car is READY means the pump is actually running — verify before resetting');
+  }) }, 'Check pump health');
+
+  const chargeBtn = el('button', { class: 'btn danger', onclick: async () => {
+    if (!confirm('Also reset the CHARGE-pump wear counters (334D/334E/334F/3530)?\n\n' +
+      'A full pump replacement resets these too; the driving-counter reset alone does not touch them. ' +
+      'Only after replacing/verifying the pump. Type-to-confirm on the next prompt.')) return;
+    const answer = prompt('Type EVC to reset the charge-pump counters:');
+    if (answer?.trim().toUpperCase() !== 'EVC') { log.line('err', '! cancelled'); return; }
+    await exec(async () => {
+      await ctx.uds.startSession(ecu);
+      for (const did of ['334d', '334e', '334f', '3530']) {
+        log.line('tx', `> 2E ${did.toUpperCase()} 00000000`);
+        await ctx.uds.writeDid(ecu, did, '00000000');
+        log.line('rx', '< ok');
+      }
+      log.line('rx', '✓ charge-pump counters reset');
+    });
+  } }, 'Also reset charge pump ⚠');
+
+  return el('span', { class: 'toolbar', style: 'display:contents' }, checkBtn, chargeBtn);
 }
 
 /* ---------- 7. Odometer / mileage check ---------- */
