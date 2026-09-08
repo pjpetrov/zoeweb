@@ -360,11 +360,48 @@ function tcuCard(ctx) {
     return out.replace(/\0+$/, '').trim();
   };
 
+  // universal identifiers almost every UDS ECU answers — used to prove the
+  // TCU is reachable at all before blaming a specific config DID
+  const IDENT_DIDS = [
+    ['22f190', 'VIN'], ['22f18c', 'ECU serial number'],
+    ['22f1a0', 'diagnostic spec version'], ['22f194', 'supplier ECU sw number'],
+  ];
+
+  /** Try to wake a sleeping TCU: tester-present flood + session, a few times. */
+  const wake = async ecu => {
+    for (let i = 0; i < 5; i++) {
+      await ctx.uds.raw(ecu, '3e00', { timeout: 500 }).catch(() => {});
+      const ok = await ctx.uds.raw(ecu, '1003', { timeout: 800 }).catch(() =>
+        ctx.uds.raw(ecu, '10c0', { timeout: 800 }).catch(() => null));
+      if (ok) return true;
+    }
+    return false;
+  };
+
   const runBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
     table.clear();
     const ecu = tcu();
     if (!ecu) { log.line('err', '! no TCU in this car database'); return; }
-    await ctx.uds.startSession(ecu).catch(() => {});
+
+    log.line('tx', '> waking the TCU (tester-present + session)…');
+    const awake = await wake(ecu);
+    // prove reachability with universal ident DIDs first
+    let reachable = awake;
+    for (const [did, label] of IDENT_DIDS) {
+      try {
+        const p = await ctx.uds.raw(ecu, did, { timeout: 2500 });
+        const t = ascii(p.substring(4));
+        table.add(label, t || p.substring(4).toUpperCase(), '');
+        reachable = true;
+      } catch (_) {}
+    }
+    if (!reachable) {
+      log.line('err', '! TCU unreachable — it is asleep or absent. Put the car in READY (foot on brake, ' +
+        'press Start), keep it awake, and try again. Some Zoes have the SIM/TCU removed or deactivated.');
+      return;
+    }
+    log.line('rx', '✓ TCU is reachable — reading config…');
+
     let answered = 0;
     for (const [did, label] of TCU_DIDS) {
       try {
@@ -375,9 +412,9 @@ function tcuCard(ctx) {
         answered++;
       } catch (_) { /* DID not on this TCU generation — skip quietly */ }
     }
-    log.line(answered ? 'rx' : 'err',
-      answered ? `✓ ${answered} parameter(s) read — the ones that answered tell you the TCU generation`
-               : '! the TCU did not answer (asleep, or not present)');
+    log.line('rx', answered
+      ? `✓ ${answered} config parameter(s) read — the ones that answered tell you the TCU generation`
+      : '· TCU reachable but returned no config values (locked without a security session, or a different generation)');
   }) }, 'Read TCU / SIM config');
 
   return section('TCU / connected-services inspection (read-only)',
