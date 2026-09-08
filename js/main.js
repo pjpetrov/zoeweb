@@ -18,6 +18,8 @@ import { AllDataScreen } from './screens/alldata.js';
 import { ProScreen } from './screens/pro.js';
 import { ServiceScreen } from './screens/service.js';
 
+export const APP_VERSION = '2026-09-08.1';
+
 const settings = {
   get car() { return localStorage.getItem('zoe.car') || 'ZOE'; },
   set car(v) { localStorage.setItem('zoe.car', v); },
@@ -234,6 +236,7 @@ document.getElementById('menu-btn').addEventListener('click', () =>
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+document.getElementById('app-version').textContent = 'v' + APP_VERSION + ' · ';
 app.start().catch(e => {
   document.getElementById('status-text').textContent = 'Failed to start: ' + e.message;
   console.error(e);
