@@ -396,10 +396,11 @@ function tcuCard(ctx) {
       } catch (_) {}
     }
     if (!reachable) {
-      log.line('err', '! No answer on the standard OBD diagnostic CAN (pins 6/14).');
-      log.line('hint', 'If the SIM still works (you get charge SMS), the TCU is fine — it just sits on the ' +
-        'MULTIMEDIA CAN, like the R-Link. Reach it with the rewired cable (ELM pin 6 → car pin 13, ' +
-        'pin 14 → car pin 12), car in READY, then run this again. Without that cable the OBD port cannot see it.');
+      log.line('err', '! No answer from the TCU.');
+      log.line('hint', 'The TCU is on the vehicle CAN and IS reachable on the normal OBD connector (others have ' +
+        'read it and hard-reset it with DDT4All). A silent read almost always means it is asleep — put the car in ' +
+        'READY (foot on brake, press Start), keep it awake, and run this again. It is NOT the R-Link — no ' +
+        'pin-12/13 cable is needed for the TCU.');
       return;
     }
     log.line('rx', '✓ TCU is reachable — reading config…');
@@ -422,11 +423,12 @@ function tcuCard(ctx) {
   return section('TCU / connected-services inspection (read-only)',
     el('p', { class: 'hint' },
       'Read-only. Reads the telematics unit\u2019s SIM, APN and backend-server settings. The TCU is on the ' +
-      'multimedia CAN (like the R-Link), so reaching it needs the rewired OBD cable (pins 12/13); on the ' +
-      'standard OBD pins it will not answer even though the SIM works. Renault shut down the Zoe\u2019s ' +
-      'connected-services backend. For remote pre-heat/climate and status that works today, the proven route ' +
-      'is an OVMS module (docs.openvehicles.com, Renault Zoe Ph1). The opencarwings project revives Nissan ' +
-      'Leaf TCUs; Zoe compatibility is unconfirmed. The eCall (emergency) URL is safety-related — leave it alone.'),
+      'vehicle CAN and is reachable on the normal OBD connector (no R-Link pin-12/13 cable needed); if it does ' +
+      'not answer it is usually asleep — put the car in READY and retry. Renault shut down the Zoe\u2019s ' +
+      'connected-services backend. For remote pre-heat/climate and status that works today, the proven route is ' +
+      'an OVMS module (docs.openvehicles.com, Renault Zoe Ph1). The Zoe TCU is a Ficosa / Sierra Wireless ' +
+      'AirPrime unit; the opencarwings project revives Ficosa TCUs on the Nissan Leaf, but Zoe compatibility is ' +
+      'unconfirmed. The eCall (emergency) URL is safety-related — leave it alone.'),
     el('div', { class: 'toolbar' }, runBtn, copyButton(() => table.text('ZoeWeb TCU inspection'))),
     table.root, log.root);
 }
