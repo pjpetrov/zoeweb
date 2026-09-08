@@ -63,11 +63,20 @@ The **Service** screen offers guided procedures for the Zoe Ph1 / ZE40:
   temperature on the dash, switch km/miles, bar/PSI, cluster language, indicator
   sound. Reads current values first; every write is verified by read-back.
 
-Forum config tweaks living in OTHER ECUs (auto door locking, DRL behaviour,
-mirror folding — BCM; Android Auto — R-Link, which sits on the multimedia CAN at
-OBD pins 12/13 and needs a rewired cable plus Renault's proprietary MFD database)
-are deliberately not included: no verified request bytes can be shipped. Use
-DDT4All with the XML matching your ECU for those.
+- **Cluster feature flags** — TPMS on/off (the winter-wheels tweak), cruise
+  control/limiter, park assist, climate, heated seats, TCU, auto headlights,
+  navigation presence.
+- **Android Auto on R-Link** — guided procedure: scans for the R-Link, reads the
+  ADAS configuration (`6C1C`) and writes the community-known enable values, with
+  read-back verification and rollback. Requires the rewired OBD cable (ELM pin
+  6 → car pin 13, pin 14 → car pin 12: R-Link lives on the multimedia CAN) and
+  up-to-date R-Link firmware.
+
+Body-computer (BCM) tweaks from the forums — auto door locking, DRL behaviour,
+mirror folding — are deliberately NOT included: the BCM's configuration layout
+differs between its software versions and no verified per-version byte map
+exists, so a hardcoded write could misconfigure the wrong car. For those, use
+DDT4All with the definition file (XML) matching your exact BCM.
 
 ## Beyond CanZE — the Pro console
 
