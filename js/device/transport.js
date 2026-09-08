@@ -155,7 +155,15 @@ const shortUuid = u => u.startsWith('0000') && u.endsWith('-0000-1000-8000-00805
 const charProps = c => ['notify', 'indicate', 'write', 'writeWithoutResponse', 'read']
   .filter(p => c.properties[p]).map(p => p === 'writeWithoutResponse' ? 'wnr' : p[0] + p[1]).join(',');
 
-const BLE_CANDIDATE_SERVICES = [
+/*
+ * All service UUIDs as full 128-bit strings: the spec also allows 16-bit
+ * numbers, but some Web-BLE implementations (Bluefy on iOS) fail to parse
+ * them ("Request payload could not be parsed").
+ */
+const uuid128 = v => typeof v === 'number'
+  ? `0000${v.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb`
+  : v.toLowerCase();
+const BLE_CANDIDATE_SERVICES = [...new Set([
   0xfff0,   // most Chinese clones (fff1/fff2)
   0xffe0,   // HM-10 style modules (ffe1 does both)
   0xffe5,   // HM-16/17 split write service (ffe9)
@@ -166,8 +174,7 @@ const BLE_CANDIDATE_SERVICES = [
   0xff00,   // misc clones
   '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service (NUS)
   'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Vgate iCar Pro BLE
-  '0000fff0-0000-1000-8000-00805f9b34fb',
-];
+].map(uuid128))];
 
 export class BleTransport {
   constructor() {
