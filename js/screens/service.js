@@ -559,21 +559,30 @@ const clusterFeaturesCard = ctx => tdbPrefsCard(ctx,
 /* ---------- 9. Android Auto on R-Link ---------- */
 
 /*
- * The R-Link ADAS configuration byte (DID 6C1C, after-sales session 10C0) is
- * what DDT4All's "ECU Configuration ADAS" screen writes; C4 and E4 are the two
- * community-known "Android Auto enabled" values (variant dependent). The unit
- * lives on the multimedia CAN (OBD pins 12/13) — reachable only through a
- * rewired extension cable (ELM pin 6 → car pin 13, ELM pin 14 → car pin 12).
+ * R-Link (MFD) phone-projection configuration, verified against the official
+ * MFD v5.x DDT definitions: diag addresses 747 → 767, byte at DID 6C1C
+ * ("DataRead/DataWrite.ECU"), bits MSB-first:
+ *   0x80 SPVR iPhone (Siri)   0x40 Android Auto      0x20 MirrorLink
+ *   0x10 MW radio band        0x08 LW radio band     0x04 SPVR other phones
+ * The classic community value C4 = iPhone + Android Auto + other phones.
  */
+const RLINK_BITS = [
+  [0x40, 'Android Auto'],
+  [0x80, 'SPVR for iPhone (Siri)'],
+  [0x04, 'SPVR for other phones (Google Assistant)'],
+  [0x20, 'MirrorLink'],
+  [0x10, 'MW radio band'],
+  [0x08, 'LW radio band'],
+];
+
 function androidAutoCard(ctx) {
   const log = makeLog();
   const exec = runGuard(ctx, log);
   let ecu = null;
   let original = null;
 
-  const reqIn = el('input', { class: 'input mono', placeholder: 'req id', style: 'min-width:70px;width:80px' });
-  const respIn = el('input', { class: 'input mono', placeholder: 'resp id', style: 'min-width:70px;width:80px' });
-  const current = el('span', { class: 'mono' }, '—');
+  const reqIn = el('input', { class: 'input mono', value: '747', style: 'min-width:70px;width:80px' });
+  const respIn = el('input', { class: 'input mono', value: '767', style: 'min-width:70px;width:80px' });
 
   const makeEcu = (requestId, responseId) => ({
     toIdHex: requestId, fromIdHex: responseId, isExtended: false,
@@ -581,23 +590,27 @@ function androidAutoCard(ctx) {
     mnemonic: 'R-LINK', name: 'R-Link (MFD)',
   });
 
+  const useManual = () => {
+    const r = reqIn.value.trim().toLowerCase(), a = respIn.value.trim().toLowerCase();
+    if (/^[0-9a-f]{3}$/.test(r) && /^[0-9a-f]{3}$/.test(a)) ecu = makeEcu(r, a);
+    return ecu;
+  };
+
   const scanBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
-    log.line('tx', '> scanning the bus for a diagnostic responder (this only works through the rewired cable)…');
+    log.line('tx', '> scanning the bus (needs the rewired cable; R-Link awake)…');
     await ctx.elm.probeBegin();
     ecu = null;
     try {
-      const ranges = [];
-      for (let id = 0x700; id <= 0x7ff; id++) ranges.push(id);
-      for (let id = 0x600; id <= 0x6ff; id++) ranges.push(id);
-      for (let i = 0; i < ranges.length; i++) {
-        const idHex = ranges[i].toString(16);
+      const ids = [0x747, ...Array.from({ length: 0x200 }, (_, i) => 0x600 + i).filter(x => x !== 0x747)];
+      for (let i = 0; i < ids.length; i++) {
+        const idHex = ids[i].toString(16);
         if (i % 32 === 0) log.line('hint', `… probing 0x${idHex}`);
         const hit = await ctx.elm.probeId(idHex).catch(() => null);
         if (hit) {
           ecu = makeEcu(hit.requestId, hit.responseId);
           reqIn.value = hit.requestId;
           respIn.value = hit.responseId;
-          log.line('rx', `✓ found a responder: request ${hit.requestId} / response ${hit.responseId}`);
+          log.line('rx', `✓ responder found: ${hit.requestId} → ${hit.responseId}`);
           const known = ctx.db.ecus.find(e => e.toIdHex === hit.requestId || e.fromIdHex === hit.responseId);
           if (known) {
             log.line('err', `! ${hit.requestId} is the ${known.name} (${known.mnemonic}) — you are on the NORMAL ` +
@@ -606,56 +619,75 @@ function androidAutoCard(ctx) {
           break;
         }
       }
-      if (!ecu) log.line('err', '! nothing answered. Is the rewired cable in place and the R-Link awake (screen on)?');
+      if (!ecu) log.line('err', '! nothing answered — check the cable and that the R-Link screen is on');
     } finally {
       await ctx.elm.probeEnd();
     }
   }) }, 'Scan for R-Link');
 
-  const useManual = () => {
-    const r = reqIn.value.trim().toLowerCase(), a = respIn.value.trim().toLowerCase();
-    if (/^[0-9a-f]{3}$/.test(r) && /^[0-9a-f]{3}$/.test(a)) ecu = makeEcu(r, a);
-    return ecu;
-  };
+  // bit editor
+  const checks = new Map();
+  const bitsBox = el('div', { class: 'toolbar', style: 'flex-direction:column;align-items:flex-start;gap:4px' });
+  for (const [mask, label] of RLINK_BITS) {
+    const cb = el('input', { type: 'checkbox', disabled: '' });
+    checks.set(mask, cb);
+    bitsBox.append(el('label', { style: 'min-width:0' }, cb, ' ', label));
+  }
+  const current = el('span', { class: 'mono' }, '—');
 
   const readBtn = el('button', { class: 'btn', onclick: () => exec(async () => {
-    if (!useManual()) { log.line('err', '! scan first, or enter the request/response ids'); return; }
+    if (!useManual()) { log.line('err', '! enter/scan the ids first'); return; }
     await ctx.uds.startSession(ecu);
     const p = await ctx.uds.raw(ecu, '226c1c');
-    original = p.substring(6);
-    current.textContent = original.toUpperCase();
-    log.line('rx', `ADAS config (6C1C) = ${original.toUpperCase()} — kept as rollback value`);
-  }) }, 'Read ADAS config');
+    original = parseInt(p.substring(6, 8), 16);
+    current.textContent = '0x' + original.toString(16).padStart(2, '0').toUpperCase();
+    for (const [mask, cb] of checks) { cb.checked = (original & mask) !== 0; cb.disabled = false; }
+    log.line('rx', `phone-projection config (6C1C) = ${current.textContent} — kept as rollback value`);
+  }) }, 'Read config');
 
-  const writeVal = val => exec(async () => {
-    if (!useManual()) { log.line('err', '! scan first, or enter the request/response ids'); return; }
-    if (original === null) { log.line('err', '! read the ADAS config first — a unit that cannot answer 22 6C1C is not an R-Link and must not be written to'); return; }
-    if (!confirm(`Write ADAS config (6C1C) = ${val.toUpperCase()} to the R-Link?\n\n` +
-      'Same write DDT4All performs for "Android Auto feature = Present". If this firmware variant refuses, ' +
-      'nothing is changed. Afterwards press the R-Link Home button 5× to restart it.')) return;
-    await ctx.uds.startSession(ecu);
-    await ctx.uds.writeDid(ecu, '6c1c', val);
-    const back = (await ctx.uds.raw(ecu, '226c1c')).substring(6, 6 + val.length);
-    current.textContent = back.toUpperCase();
-    log.line(back === val ? 'rx' : 'err', back === val
-      ? `✓ verified ${back.toUpperCase()} — restart the R-Link (Home 5×), then plug the phone in via USB`
-      : `! read-back shows ${back.toUpperCase()}`);
-  });
+  const presetBtn = el('button', { class: 'btn', onclick: () => {
+    if (original === null) { log.line('err', '! read the config first'); return; }
+    checks.get(0x40).checked = true;   // Android Auto
+    checks.get(0x80).checked = true;   // Siri
+    checks.get(0x04).checked = true;   // Google Assistant
+    checks.get(0x20).checked = false;  // MirrorLink off (recommended)
+    log.line('hint', 'preset applied (the classic "C4" recipe) — press Write to send it');
+  } }, 'Preset: enable Android Auto');
 
-  const writeC4 = el('button', { class: 'btn danger', onclick: () => writeVal('c4') }, 'Enable AA (C4) ⚠');
-  const writeE4 = el('button', { class: 'btn danger', onclick: () => writeVal('e4') }, 'Enable AA (E4) ⚠');
-  const restore = el('button', { class: 'btn', onclick: () => {
-    if (!original) { log.line('err', '! read the config first — there is nothing to restore'); return; }
-    writeVal(original);
+  const writeBtn = el('button', { class: 'btn danger', onclick: async () => {
+    if (!useManual() || original === null) { log.line('err', '! read the config first'); return; }
+    let value = 0;
+    for (const [mask, cb] of checks) if (cb.checked) value |= mask;
+    const hex = value.toString(16).padStart(2, '0');
+    if (!confirm(`Write phone-projection config = 0x${hex.toUpperCase()} to the R-Link?\n\n` +
+      `Current value 0x${original.toString(16).padStart(2, '0').toUpperCase()} stays in the log for rollback. ` +
+      'Afterwards restart the R-Link (Home button 5×).')) return;
+    await exec(async () => {
+      await ctx.uds.startSession(ecu);
+      await ctx.uds.writeDid(ecu, '6c1c', hex);
+      const back = parseInt((await ctx.uds.raw(ecu, '226c1c')).substring(6, 8), 16);
+      current.textContent = '0x' + back.toString(16).padStart(2, '0').toUpperCase();
+      log.line(back === value ? 'rx' : 'err', back === value
+        ? '✓ verified — restart the R-Link (Home 5×), then connect the phone via USB'
+        : `! read-back shows 0x${back.toString(16)} — this firmware refused the write`);
+    });
+  } }, 'Write config ⚠');
+
+  const restoreBtn = el('button', { class: 'btn', onclick: () => {
+    if (original === null) { log.line('err', '! nothing to restore'); return; }
+    for (const [mask, cb] of checks) cb.checked = (original & mask) !== 0;
+    log.line('hint', 'checkboxes reset to the original value — press Write to send it back');
   } }, 'Restore original');
 
   return section('Android Auto on R-Link (ZE40)',
     el('p', { class: 'hint' },
-      'Needs the rewired OBD extension cable (ELM pin 6 → car pin 13, pin 14 → car pin 12: the multimedia CAN) ' +
-      'and up-to-date R-Link firmware. Flow: scan → read current config → enable (try C4 first; E4 is the ' +
-      'alternate variant) → restart R-Link with 5× Home. A firmware that refuses the write changes nothing.'),
-    el('div', { class: 'toolbar' }, scanBtn, reqIn, respIn, readBtn, el('span', { class: 'hint' }, 'ADAS config:'), current),
-    el('div', { class: 'toolbar' }, writeC4, writeE4, restore),
+      'Configures the R-Link phone projection exactly like DDT4All\u2019s "MFD → ECU Configuration ADAS" screen ' +
+      '(verified addresses 747→767, config byte 6C1C). Needs the rewired OBD cable (ELM pin 6 → car pin 13, ' +
+      'pin 14 → car pin 12: the multimedia CAN) and up-to-date R-Link firmware. Flow: Read config → tick the ' +
+      'features (or use the preset) → Write → restart R-Link with 5× Home.'),
+    el('div', { class: 'toolbar' }, scanBtn, reqIn, respIn, readBtn, el('span', { class: 'hint' }, 'config:'), current),
+    bitsBox,
+    el('div', { class: 'toolbar' }, presetBtn, writeBtn, restoreBtn),
     log.root);
 }
 
