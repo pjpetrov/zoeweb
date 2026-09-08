@@ -421,14 +421,12 @@ function tcuCard(ctx) {
 
   return section('TCU / connected-services inspection (read-only)',
     el('p', { class: 'hint' },
-      'Reads the telematics unit\u2019s SIM, APN and backend-server settings. Renault shut down the Zoe\u2019s ' +
-      'connected-services backend, so remote A/C and remote charge no longer work. Retargeting the TCU to a ' +
-      'different backend is technically possible — the URL/APN/server identifiers here are writable (via the Pro ' +
-      'console, and every write is backed up in Backups) — BUT it only helps if a REPLACEMENT server that speaks ' +
-      'Renault\u2019s telematics protocol exists to point it at; changing the URL alone will not revive the features. ' +
-      'Note: the eCall (emergency) URL is safety-related — do not disturb it. This card is read-only. ' +
-      'The TCU is on the multimedia CAN (like the R-Link), so reaching it needs the rewired OBD cable ' +
-      '(pins 12/13); on the standard OBD pins it will not answer even though the SIM works.'),
+      'Read-only. Reads the telematics unit\u2019s SIM, APN and backend-server settings. The TCU is on the ' +
+      'multimedia CAN (like the R-Link), so reaching it needs the rewired OBD cable (pins 12/13); on the ' +
+      'standard OBD pins it will not answer even though the SIM works. Renault shut down the Zoe\u2019s ' +
+      'connected-services backend. For remote pre-heat/climate and status that works today, the proven route ' +
+      'is an OVMS module (docs.openvehicles.com, Renault Zoe Ph1). The opencarwings project revives Nissan ' +
+      'Leaf TCUs; Zoe compatibility is unconfirmed. The eCall (emergency) URL is safety-related — leave it alone.'),
     el('div', { class: 'toolbar' }, runBtn, copyButton(() => table.text('ZoeWeb TCU inspection'))),
     table.root, log.root);
 }
