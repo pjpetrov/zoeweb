@@ -396,8 +396,10 @@ function tcuCard(ctx) {
       } catch (_) {}
     }
     if (!reachable) {
-      log.line('err', '! TCU unreachable — it is asleep or absent. Put the car in READY (foot on brake, ' +
-        'press Start), keep it awake, and try again. Some Zoes have the SIM/TCU removed or deactivated.');
+      log.line('err', '! No answer on the standard OBD diagnostic CAN (pins 6/14).');
+      log.line('hint', 'If the SIM still works (you get charge SMS), the TCU is fine — it just sits on the ' +
+        'MULTIMEDIA CAN, like the R-Link. Reach it with the rewired cable (ELM pin 6 → car pin 13, ' +
+        'pin 14 → car pin 12), car in READY, then run this again. Without that cable the OBD port cannot see it.');
       return;
     }
     log.line('rx', '✓ TCU is reachable — reading config…');
@@ -424,7 +426,9 @@ function tcuCard(ctx) {
       'different backend is technically possible — the URL/APN/server identifiers here are writable (via the Pro ' +
       'console, and every write is backed up in Backups) — BUT it only helps if a REPLACEMENT server that speaks ' +
       'Renault\u2019s telematics protocol exists to point it at; changing the URL alone will not revive the features. ' +
-      'Note: the eCall (emergency) URL is safety-related — do not disturb it. This card is read-only.'),
+      'Note: the eCall (emergency) URL is safety-related — do not disturb it. This card is read-only. ' +
+      'The TCU is on the multimedia CAN (like the R-Link), so reaching it needs the rewired OBD cable ' +
+      '(pins 12/13); on the standard OBD pins it will not answer even though the SIM works.'),
     el('div', { class: 'toolbar' }, runBtn, copyButton(() => table.text('ZoeWeb TCU inspection'))),
     table.root, log.root);
 }
