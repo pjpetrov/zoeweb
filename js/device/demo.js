@@ -111,6 +111,9 @@ export class DemoTransport {
       return;
     }
     if (svc === '31') { this._sendIsoTp('71' + requestId.substring(2)); return; }
+    if (svc === '30') { this._sendIsoTp('70' + requestId.substring(2)); return; } // IO control (transient)
+    if (svc === '11') { this._sendIsoTp('51' + requestId.substring(2, 4)); return; } // ECU reset
+    if (svc === '3b') { this._sendIsoTp('7b' + requestId.substring(2, 4)); return; } // write (KWP)
 
     // a previously written DID reads back what was written
     if (svc === '22') {

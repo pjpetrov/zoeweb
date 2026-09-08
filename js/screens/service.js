@@ -273,6 +273,52 @@ function chargeFixCard(ctx) {
     results, log.root);
 }
 
+/* ---------- 4b. Cluster self-test (lamps / buzzer / display) ---------- */
+
+/*
+ * Cluster output self-test, verified against TdB_X10 (KWP service 30 I/O
+ * control on 743→763). These are TRANSIENT: they revert when stopped or on
+ * the next ignition cycle, so nothing is persisted and no backup is needed.
+ *   30012001 all warning lamps on / 30012000 off / 300111 release
+ *   30032000 buzzer on / 300311 release
+ *   300420FF display test / 300411 release
+ */
+function clusterTestCard(ctx) {
+  const log = makeLog();
+  const exec = runGuard(ctx, log);
+  const tdb = () => ctx.db.ecuByMnemonic('TDB');
+  let stopper = null;
+
+  const stopAll = () => exec(async () => {
+    for (const stop of ['300111', '300311', '300411', '300611']) {
+      await ctx.uds.raw(tdb(), stop).catch(() => {});
+    }
+    if (stopper) { clearTimeout(stopper); stopper = null; }
+    log.line('rx', '✓ outputs released — cluster back to normal');
+  });
+
+  const run = (onCmd, label) => exec(async () => {
+    await ctx.uds.startSession(tdb()).catch(() => {});
+    log.line('tx', `> ${label} (10 s)`);
+    await ctx.uds.raw(tdb(), onCmd);
+    log.line('rx', '< active — watch the dashboard');
+    if (stopper) clearTimeout(stopper);
+    stopper = setTimeout(() => stopAll(), 10000); // safety auto-stop
+  });
+
+  return section('Cluster self-test (lamps, buzzer, display)',
+    el('p', { class: 'hint' },
+      'Momentarily drives the instrument cluster outputs to check them — light every warning lamp at once ' +
+      '(spot a dead LED), sound the buzzer, run the display test. Transient only: everything returns to normal ' +
+      'when you press Stop or cycle the ignition. Car stationary.'),
+    el('div', { class: 'toolbar' },
+      el('button', { class: 'btn', onclick: () => run('30012001', 'all warning lamps ON') }, 'Test warning lamps'),
+      el('button', { class: 'btn', onclick: () => run('30032000', 'buzzer ON') }, 'Test buzzer'),
+      el('button', { class: 'btn', onclick: () => run('300420ff', 'display test') }, 'Test display'),
+      el('button', { class: 'btn danger', onclick: stopAll }, 'Stop')),
+    log.root);
+}
+
 /* ---------- 5. ECU identification report ---------- */
 
 function ecuIdCard(ctx) {
@@ -812,6 +858,7 @@ export class ServiceScreen extends Screen {
       odometerCard(ctx),
       maintenanceCard(ctx),
       tpmsCard(ctx),
+      clusterTestCard(ctx),
       clusterPrefsCard(ctx),
       clusterFeaturesCard(ctx),
       androidAutoCard(ctx),
