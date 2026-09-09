@@ -8,6 +8,7 @@
 import { Screen } from './screens.js';
 import { el, section } from '../ui/widgets.js';
 import { parseDdt } from '../core/ddt.js';
+import { listZip, extractText } from '../core/unzip.js';
 
 const STORE = 'zoe.ddt.files.v1';
 
@@ -40,7 +41,7 @@ export class ExpertScreen extends Screen {
       this.ecus.size ? `${this.ecus.size} ECU definition(s) loaded.` : 'No ECU definitions loaded yet.');
     const body = el('div', {});
 
-    // --- file loader ---
+    // --- file loader (individual .json) ---
     const fileInput = el('input', { type: 'file', accept: '.json', multiple: '', style: 'display:none',
       onchange: async e => {
         for (const file of e.target.files) {
@@ -54,6 +55,15 @@ export class ExpertScreen extends Screen {
         rebuild();
       } });
     const loadBtn = el('button', { class: 'btn', onclick: () => fileInput.click() }, 'Load ECU file(s)…');
+
+    // --- database .zip loader: auto-pick ECUs matching the selected car ---
+    const zipInput = el('input', { type: 'file', accept: '.zip', style: 'display:none',
+      onchange: async e => {
+        const file = e.target.files[0];
+        if (file) await this._loadZip(ctx, file, status, rebuild);
+        zipInput.value = '';
+      } });
+    const zipBtn = el('button', { class: 'btn', onclick: () => zipInput.click() }, 'Load database .zip (auto-match car)…');
     const clearBtn = el('button', { class: 'btn', onclick: () => {
       if (!confirm('Forget all loaded ECU definitions? (Your files are not deleted.)')) return;
       this.ecus.clear(); localStorage.removeItem(STORE); rebuild();
@@ -79,8 +89,11 @@ export class ExpertScreen extends Screen {
       const ecu = self.ecus.get(ecuSel.value);
       if (!ecu) {
         body.append(el('p', { class: 'hint' },
-          'Load a DDT4All ECU definition (a .json file from your DDT4All / DDT2000 database), then pick it above. ' +
-          'ZoeWeb reads and writes it through your dongle — no proprietary data is bundled in the app.'));
+          'Load your DDT4All database: "Load database .zip" scans the whole ecu.zip and keeps only the ECU ' +
+          'definitions whose diagnostic address matches the car you picked in Settings (' + ctx.db.car.label + '). ' +
+          'Or load individual .json ECU files. Then pick an ECU above. No proprietary data is bundled in the app. ' +
+          'Tip: a few addresses are shared across Renault models, so if two files match one ECU, prefer the one ' +
+          'named for your platform (Zoe = X10 / L38 / X61) or the newest date.'));
         return;
       }
       const filter = search.value.trim().toLowerCase();
@@ -95,7 +108,7 @@ export class ExpertScreen extends Screen {
 
     c.append(
       section('DDT4All ECU definitions',
-        el('div', { class: 'toolbar' }, loadBtn, clearBtn, fileInput),
+        el('div', { class: 'toolbar' }, zipBtn, loadBtn, clearBtn, fileInput, zipInput),
         status,
         el('div', { class: 'warnbox' },
           '⚠️ Expert mode drives raw ECU requests loaded from your DDT files. Reads are safe; writes change ' +
@@ -104,6 +117,49 @@ export class ExpertScreen extends Screen {
         el('div', { class: 'toolbar' }, el('label', {}, 'ECU'), ecuSel, search)),
       body,
     );
+    rebuild();
+  }
+
+  /**
+   * Load a DDT database .zip and keep only the ECU files whose diagnostic
+   * address matches an ECU of the currently selected car (from Settings).
+   */
+  async _loadZip(ctx, file, status, rebuild) {
+    status.textContent = 'Reading zip…';
+    // the selected car's ECU addresses (request + response ids), from the DB
+    const carIds = new Set();
+    for (const e of ctx.db.ecus) {
+      if (e.toIdHex) carIds.add(e.toIdHex.toLowerCase());
+      if (e.fromIdHex) carIds.add(e.fromIdHex.toLowerCase());
+    }
+    let entries;
+    try {
+      const buf = await file.arrayBuffer();
+      entries = listZip(buf).filter(en => /\.json$/i.test(en.name));
+      status.textContent = `Scanning ${entries.length} ECU files for ${ctx.db.car.label}…`;
+      let matched = 0, scanned = 0;
+      for (const en of entries) {
+        scanned++;
+        if (scanned % 100 === 0) status.textContent = `Scanning ${scanned}/${entries.length}… (${matched} match so far)`;
+        let text;
+        try { text = await extractText(buf, en); } catch (_) { continue; }
+        let obd;
+        try { obd = JSON.parse(text).obd; } catch (_) { continue; }
+        const send = (obd?.send_id || '').toLowerCase();
+        const recv = (obd?.recv_id || '').toLowerCase();
+        if (!carIds.has(send) && !carIds.has(recv)) continue; // not this car's ECU
+        try {
+          const ecu = parseDdt(text, en.name.split('/').pop());
+          this.ecus.set(ecu.name, ecu);
+          this._persist(en.name.split('/').pop(), text);
+          matched++;
+        } catch (_) {}
+      }
+      status.textContent = `✓ matched ${matched} ECU definition(s) for ${ctx.db.car.label} ` +
+        `(from ${entries.length} in the zip). Pick one below.`;
+    } catch (err) {
+      status.textContent = '✗ ' + err.message;
+    }
     rebuild();
   }
 
