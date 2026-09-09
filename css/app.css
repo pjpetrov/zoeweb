@@ -206,8 +206,9 @@ body:has(.hud) #content { padding: 0; }
 .ro-val { font-size: clamp(24px, 4vmin, 42px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: #eef4ff; text-shadow: 0 0 16px rgba(120,160,210,.3); }
 .ro-val.stale { opacity: .4; }
 .ro-unit { font-size: clamp(11px, 1.6vmin, 14px); color: var(--dim); }
-.ro-stack { display: flex; flex-direction: column; gap: 2px; }
+.ro-stack { display: flex; flex-direction: column; gap: 4px; }
 .ro-stack .ro-row { justify-content: center; }
+.ro-lineitem .ro-sub { font-size: clamp(9px, 1.3vmin, 12px); color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1px; }
 
 @media (max-width: 700px) {
   .dial {

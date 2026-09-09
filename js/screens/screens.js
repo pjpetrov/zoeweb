@@ -66,14 +66,14 @@ export class DashboardScreen extends Screen {
     const avg = readout('Consumption', 'kWh/100km');
     const range = readout('Range', 'km');
     const odo = readout('Odometer', 'km');
-    const battery = this.stack(ctx, [
+    const battery = this.stack(ctx, { title: 'Battery', items: [
       { sid: Sid.UserSoC, unit: '%', dec: 0, interval: 3000 },
       { sid: Sid.HvTemp, unit: '°C', dec: 0, interval: 5000 },
-    ]);
-    const climate = this.stack(ctx, [
-      { sid: Sid.CabinTemp, unit: '°C', dec: 0, interval: 5000 },
-      { sid: Sid.OutsideTemp, unit: '°C', dec: 0, interval: 5000 },
-    ]);
+    ] });
+    const climate = this.stack(ctx, { items: [
+      { sid: Sid.CabinTemp, label: 'Cabin', unit: '°C', dec: 0, interval: 5000 },
+      { sid: Sid.OutsideTemp, label: 'Outside', unit: '°C', dec: 0, interval: 5000 },
+    ] });
 
     c.append(
       el('div', { class: 'hud' },
@@ -102,12 +102,17 @@ export class DashboardScreen extends Screen {
     this.bind(ctx, Sid.EvcOdometer, odo, 8000);
   }
 
-  /** Two (or more) values stacked one under the other, each on its own line. */
-  stack(ctx, items) {
+  /** Values stacked one under the other, with an optional group title and
+   *  optional per-line labels. */
+  stack(ctx, { title, items }) {
     const root = el('div', { class: 'ro ro-stack' });
+    if (title) root.append(el('div', { class: 'ro-label' }, title));
     for (const it of items) {
       const v = el('span', { class: 'ro-val' }, '—');
-      root.append(el('div', { class: 'ro-row' }, v, el('span', { class: 'ro-unit' }, it.unit)));
+      const line = el('div', { class: 'ro-lineitem' });
+      if (it.label) line.append(el('div', { class: 'ro-sub' }, it.label));
+      line.append(el('div', { class: 'ro-row' }, v, el('span', { class: 'ro-unit' }, it.unit)));
+      root.append(line);
       this.bind(ctx, it.sid, { update: f => { v.textContent = fmtN(f.value, it.dec, ''); } }, it.interval);
     }
     return root;
