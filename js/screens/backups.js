@@ -75,8 +75,13 @@ export class BackupsScreen extends Screen {
     try {
       const ecu = ecuFromEntry(e);
       await ctx.uds.startSession(ecu).catch(() => {});
-      // route the restore through the journal too, so it is itself undoable
-      await journaledWrite(ctx, ecu, e.did, e.before, e.label + ' (restore)');
+      if (e.rawRestore) {
+        // DDT/expert write — replay the exact original request
+        await ctx.uds.raw(ecu, e.rawRestore, { timeout: 5000 });
+      } else {
+        // route the restore through the journal too, so it is itself undoable
+        await journaledWrite(ctx, ecu, e.did, e.before, e.label + ' (restore)');
+      }
       ctx.journal.markRestored(e.id);
       status.textContent = `✓ ${e.label} restored to ${e.before.toUpperCase()} — cycle the ignition to apply.`;
       rebuild();

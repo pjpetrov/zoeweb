@@ -19,6 +19,7 @@ import { DtcScreen } from './screens/dtc.js';
 import { AllDataScreen } from './screens/alldata.js';
 import { ProScreen } from './screens/pro.js';
 import { BackupsScreen } from './screens/backups.js';
+import { ExpertScreen } from './screens/expert.js';
 import { ServiceScreen } from './screens/service.js';
 
 export const APP_VERSION = '2026-09-08.1';
@@ -120,7 +121,7 @@ class App {
     this.screens = [
       new DashboardScreen(), new DrivingScreen(), new BatteryScreen(), new ChargingScreen(),
       new RangeScreen(), new ConsumptionScreen(), new ClimateScreen(), new TiresScreen(),
-      new BrakingScreen(), new DtcScreen(), new ServiceScreen(), new BackupsScreen(), new AllDataScreen(), new ProScreen(), new SettingsScreen(),
+      new BrakingScreen(), new DtcScreen(), new ServiceScreen(), new BackupsScreen(), new AllDataScreen(), new ProScreen(), new ExpertScreen(), new SettingsScreen(),
     ];
     this.current = null;
     this.transport = null;
