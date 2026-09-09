@@ -336,24 +336,24 @@ export class ClimateScreen extends Screen {
 export class TiresScreen extends Screen {
   constructor() { super('tires', 'Tires', '🛞'); }
   render(c, ctx) {
-    const mk = (labelP, labelS) => ({ p: tile(labelP, 'bar'), s: tile(labelS) });
-    const fl = mk('Front left', 'FL state'), fr = mk('Front right', 'FR state');
-    const rl = mk('Rear left', 'RL state'), rr = mk('Rear right', 'RR state');
+    const mk = (labelP, labelT) => ({ p: tile(labelP, 'bar'), t: tile(labelT, '°C') });
+    const fl = mk('Front left', 'FL temp'), fr = mk('Front right', 'FR temp');
+    const rl = mk('Rear left', 'RL temp'), rr = mk('Rear right', 'RR temp');
     c.append(el('div', { class: 'tires-layout' },
-      el('div', { class: 'grid two' }, fl.p.root, fr.p.root, fl.s.root, fr.s.root),
-      el('div', { class: 'grid two' }, rl.p.root, rr.p.root, rl.s.root, rr.s.root),
+      el('div', { class: 'grid two' }, fl.p.root, fr.p.root, fl.t.root, fr.t.root),
+      el('div', { class: 'grid two' }, rl.p.root, rr.p.root, rl.t.root, rr.t.root),
+      el('p', { class: 'hint' }, 'Read from the body computer TPMS (diagnostic). Pressures may read 0 until the car has been driven and the sensors report.'),
     ));
-    const state = f => ({ format: () => ['?', 'ok', 'not monitored', 'low pressure', 'leak!'][Math.round(f.value)] ?? f.format() });
-    // CanZE Ph1 pressures come in mbar ÷ 100
-    const bar = f => ({ format: () => Number.isNaN(f.value) ? '—' : (f.unit.toLowerCase() === 'mbar' ? (f.value / 1000).toFixed(2) : f.value.toFixed(2)) });
-    this.bind(ctx, Sid.TireFLPressure, fl.p, 6000, bar);
-    this.bind(ctx, Sid.TireFRPressure, fr.p, 6000, bar);
-    this.bind(ctx, Sid.TireRLPressure, rl.p, 6000, bar);
-    this.bind(ctx, Sid.TireRRPressure, rr.p, 6000, bar);
-    this.bind(ctx, Sid.TireFLState, fl.s, 6000, state);
-    this.bind(ctx, Sid.TireFRState, fr.s, 6000, state);
-    this.bind(ctx, Sid.TireRLState, rl.s, 6000, state);
-    this.bind(ctx, Sid.TireRRState, rr.s, 6000, state);
+    // pressure fields are in mbar → show bar
+    const bar = f => ({ format: () => Number.isNaN(f.value) || f.value <= 0 ? '—' : (f.value / 1000).toFixed(2) });
+    this.bind(ctx, Sid.TpmsPresFL, fl.p, 6000, bar);
+    this.bind(ctx, Sid.TpmsPresFR, fr.p, 6000, bar);
+    this.bind(ctx, Sid.TpmsPresRL, rl.p, 6000, bar);
+    this.bind(ctx, Sid.TpmsPresRR, rr.p, 6000, bar);
+    this.bind(ctx, Sid.TpmsTempFL, fl.t, 8000);
+    this.bind(ctx, Sid.TpmsTempFR, fr.t, 8000);
+    this.bind(ctx, Sid.TpmsTempRL, rl.t, 8000);
+    this.bind(ctx, Sid.TpmsTempRR, rr.t, 8000);
   }
 }
 

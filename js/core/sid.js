@@ -41,6 +41,13 @@ export const Sid = {
   TireRRPressure: '673.16', TireRLPressure: '673.24', TireFRPressure: '673.32', TireFLPressure: '673.40',
   HeaterSetpoint: '699.8',
 
+  // TPMS via BCM diagnostic request 765/216D (reliable; free-frame 673 isn't
+  // broadcast on all cars). Pressures in mbar (×13.73), temps in °C (−50).
+  TpmsPresFL: '765.616d.104', TpmsPresFR: '765.616d.112',
+  TpmsPresRL: '765.616d.120', TpmsPresRR: '765.616d.128',
+  TpmsTempFL: '765.616d.136', TpmsTempFR: '765.616d.144',
+  TpmsTempRL: '765.616d.152', TpmsTempRR: '765.616d.160',
+
   ThermalComfortPower: '764.6143.88',
   Pressure: '764.6143.134',
   ClimTempDisplay: '764.6145.29',
