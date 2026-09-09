@@ -139,7 +139,7 @@ body:has(.hud) #content { padding: 0; }
 .hud {
   min-height: calc(100vh - 48px); max-width: 100vw; overflow-x: hidden;
   display: flex; flex-direction: column; justify-content: center; gap: 1vh;
-  padding: 6px 10px;
+  padding: 3px 5px;
   background:
     radial-gradient(120% 90% at 50% 30%, rgba(65,176,245,.10), transparent 60%),
     radial-gradient(80% 80% at 50% 120%, rgba(65,217,140,.08), transparent 60%),
@@ -230,7 +230,7 @@ body:has(.hud) #content { padding: 0; }
 /* short screens (phone in landscape on a dash mount): lay readouts to the
    sides of the ring so we use the wide axis, not the short one */
 @media (max-height: 560px) {
-  .hud { min-height: calc(100vh - 48px); padding: 4px 2vw; justify-content: center; }
+  .hud { min-height: calc(100vh - 48px); padding: 2px 1vw; justify-content: center; }
   .dial { flex-direction: row; align-items: center; justify-content: center; gap: clamp(16px, 4vw, 70px); }
   .dial-row { flex-direction: column; align-items: center; gap: clamp(6px, 1.8vh, 16px); width: auto; }
   .dial-mid { width: clamp(140px, 54vh, 300px); }
