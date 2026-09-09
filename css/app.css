@@ -219,10 +219,10 @@ body:has(.hud) #content { padding: 0; }
     width: 100%;
   }
   .dial-row > .ro-cell { justify-content: center; min-width: 0; overflow: hidden; }
-  .ro-val { font-size: clamp(34px, 10.5vw, 60px); }
+  .ro-val { font-size: clamp(30px, min(10.5vw, 8vh), 60px); }
   .ro-unit { font-size: clamp(10px, 2.3vw, 14px); }
   .ro-label { font-size: clamp(9px, 2.3vw, 12px); }
-  .dial-mid { width: clamp(190px, 58vw, 340px); }
+  .dial-mid { width: clamp(170px, min(58vw, 40vh), 340px); }
   .dial-aura { width: 120%; }
   /* battery bottom-left, cabin/outside bottom-right; odometer hidden (low priority) */
   .odo-cell { display: none; }
@@ -230,7 +230,7 @@ body:has(.hud) #content { padding: 0; }
 
 /* short screens (phone in landscape on a dash mount): lay readouts to the
    sides of the ring so we use the wide axis, not the short one */
-@media (max-height: 560px) {
+@media (max-height: 560px) and (min-width: 620px) {
   .hud { min-height: calc(100vh - 48px); min-height: calc(100dvh - 48px); padding: 2px 1vw; justify-content: center; }
   .dial { flex-direction: row; align-items: center; justify-content: center; gap: clamp(16px, 4vw, 70px); }
   .dial-row { flex-direction: column; align-items: center; gap: clamp(6px, 1.8vh, 16px); width: auto; }
