@@ -6,6 +6,8 @@
 import { el, tile, gauge, hbar, heatmap, timeplot, section, ringGauge, readout } from '../ui/widgets.js';
 import { Sid } from '../core/sid.js';
 
+const fmtN = (v, dec, unit) => Number.isNaN(v) ? '—' : v.toFixed(dec) + unit;
+
 export class Screen {
   constructor(id, title, icon) {
     this.id = id; this.title = title; this.icon = icon;
@@ -61,27 +63,22 @@ export class DashboardScreen extends Screen {
     this._widgets.push({ stop: () => cancelAnimationFrame(this._paintRaf) });
 
     // readouts embedded around the dial
-    const range = readout('Range', 'km');
-    const soc = readout('Charge', '%');
     const avg = readout('Consumption', 'kWh/100km');
-    const cabin = readout('Cabin', '°C');
-    const outside = readout('Outside', '°C');
-    const battTemp = readout('Battery', '°C');
+    const range = readout('Range', 'km');
+    const battery = readout('Battery', '');
+    const climate = readout('Cabin / Outside', '');
     const odo = readout('Odometer', 'km');
 
     c.append(
       el('div', { class: 'hud' },
         el('div', { class: 'dial' },
           aura,
-          el('div', { class: 'ro-cell tl' }, range.root),
-          el('div', { class: 'ro-cell tc' }, soc.root),
-          el('div', { class: 'ro-cell tr' }, avg.root),
-          el('div', { class: 'ro-cell ml' }, cabin.root),
+          el('div', { class: 'ro-cell tl' }, avg.root),
+          el('div', { class: 'ro-cell tc' }, range.root),
           el('div', { class: 'dial-ring' }, speed.root),
-          el('div', { class: 'ro-cell mr' }, outside.root),
-          el('div', { class: 'ro-cell bl' }, battTemp.root),
+          el('div', { class: 'ro-cell bl' }, battery.root),
           el('div', { class: 'ro-cell bc' }, odo.root),
-          el('div', { class: 'ro-cell br' }))),
+          el('div', { class: 'ro-cell br' }, climate.root))),
     );
 
     this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
@@ -95,12 +92,30 @@ export class DashboardScreen extends Screen {
       if (pf.lastUpdated) curP = pf.value;
     }
     this.bind(ctx, Sid.RangeEstimate, range, 3000);
-    this.bind(ctx, Sid.UserSoC, soc, 3000);
     this.bind(ctx, Sid.AverageConsumption, avg, 5000);
-    this.bind(ctx, Sid.CabinTemp, cabin, 5000);
-    this.bind(ctx, Sid.OutsideTemp, outside, 5000);
-    this.bind(ctx, Sid.HvTemp, battTemp, 5000);
     this.bind(ctx, Sid.EvcOdometer, odo, 8000);
+
+    // combined readouts: battery = SOC% · temp°C, climate = cabin° / outside°
+    this.combo(ctx, battery, [Sid.UserSoC, Sid.HvTemp], 3000,
+      (soc, t) => `${fmtN(soc, 0, '%')} · ${fmtN(t, 0, '°C')}`);
+    this.combo(ctx, climate, [Sid.CabinTemp, Sid.OutsideTemp], 5000,
+      (cab, out) => `${fmtN(cab, 0, '°')} / ${fmtN(out, 0, '°C')}`);
+  }
+
+  /** Bind several fields to one readout, reformatting on any change. */
+  combo(ctx, widget, sids, intervalMs, fmt) {
+    const fields = [];
+    for (const sid of sids) {
+      ctx.poller.subscribe(sid, intervalMs, this.id);
+      fields.push(ctx.poller.getField(sid));
+    }
+    const refresh = () => widget.set(fmt(...fields.map(f => f && typeof f.value === 'number' ? f.value : NaN)));
+    for (const f of fields) {
+      if (!f) continue;
+      f.listeners.add(refresh);
+      this._bindings.push({ field: f, listener: refresh });
+    }
+    refresh();
   }
 
   unmount(ctx) {
