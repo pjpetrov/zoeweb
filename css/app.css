@@ -138,8 +138,8 @@ body:has(.hud) #content { padding: 0; }
 
 .hud {
   min-height: calc(100vh - 48px);
-  display: flex; flex-direction: column; justify-content: center; gap: 3vh;
-  padding: 2vh 3vw;
+  display: flex; flex-direction: column; justify-content: center; gap: 2vh;
+  padding: 1.5vh 3vw;
   background:
     radial-gradient(120% 90% at 50% 30%, rgba(65,176,245,.10), transparent 60%),
     radial-gradient(80% 80% at 50% 120%, rgba(65,217,140,.08), transparent 60%),
@@ -161,9 +161,9 @@ body:has(.hud) #content { padding: 0; }
 .dial {
   position: relative; z-index: 1;
   display: grid;
-  grid-template-columns: 1fr clamp(280px, 46vmin, 540px) 1fr;
-  grid-template-rows: 1fr clamp(280px, 46vmin, 540px) 1fr;
-  align-items: center; justify-items: center; gap: clamp(6px, 2vmin, 24px);
+  grid-template-columns: 1fr clamp(240px, 40vmin, 460px) 1fr;
+  grid-template-rows: auto clamp(240px, 40vmin, 460px) auto;
+  align-items: center; justify-items: center; gap: clamp(8px, 3vmin, 40px);
   width: 100%; max-width: 1100px; margin: 0 auto;
 }
 .dial-ring { width: 100%; aspect-ratio: 1; position: relative; grid-column: 2; grid-row: 2; }
@@ -208,9 +208,9 @@ body:has(.hud) #content { padding: 0; }
 .ro { text-align: center; }
 .ro-label { font-size: clamp(11px, 1.7vmin, 15px); color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
 .ro-row { display: flex; align-items: baseline; gap: 5px; justify-content: center; }
-.ro-val { font-size: clamp(32px, 5.5vmin, 62px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: #eef4ff; text-shadow: 0 0 16px rgba(120,160,210,.3); }
+.ro-val { font-size: clamp(38px, 6.8vmin, 78px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: #eef4ff; text-shadow: 0 0 16px rgba(120,160,210,.3); }
 .ro-val.stale { opacity: .4; }
-.ro-unit { font-size: clamp(12px, 1.9vmin, 17px); color: var(--dim); }
+.ro-unit { font-size: clamp(13px, 2.2vmin, 20px); color: var(--dim); }
 .ro-stack { display: flex; flex-direction: column; gap: 4px; }
 .ro-stack .ro-row { justify-content: center; }
 .ro-lineitem .ro-sub { font-size: clamp(9px, 1.3vmin, 12px); color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1px; }
