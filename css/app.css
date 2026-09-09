@@ -138,8 +138,8 @@ body:has(.hud) #content { padding: 0; }
 
 .hud {
   min-height: calc(100vh - 48px); max-width: 100vw; overflow-x: hidden;
-  display: flex; flex-direction: column; justify-content: center; gap: 2vh;
-  padding: 1.5vh 3vw;
+  display: flex; flex-direction: column; justify-content: center; gap: 1vh;
+  padding: 6px 10px;
   background:
     radial-gradient(120% 90% at 50% 30%, rgba(65,176,245,.10), transparent 60%),
     radial-gradient(80% 80% at 50% 120%, rgba(65,217,140,.08), transparent 60%),
@@ -167,7 +167,7 @@ body:has(.hud) #content { padding: 0; }
   display: flex; justify-content: center; align-items: flex-start; flex-wrap: wrap;
   gap: clamp(24px, 12vw, 160px); width: 100%;
 }
-.dial-mid { position: relative; width: clamp(180px, min(42vw, 46vh), 430px); aspect-ratio: 1; }
+.dial-mid { position: relative; width: clamp(200px, min(44vw, 48vh), 460px); aspect-ratio: 1; }
 .dial-ring { width: 100%; height: 100%; position: relative; z-index: 1; }
 /* power aura behind the ring */
 .dial-aura {
@@ -183,7 +183,7 @@ body:has(.hud) #content { padding: 0; }
   align-items: center; justify-content: center; pointer-events: none; text-align: center;
 }
 .ring-val {
-  font-size: clamp(54px, min(17vw, 22vh), 150px); font-weight: 800; line-height: .9;
+  font-size: clamp(60px, min(19vw, 25vh), 172px); font-weight: 800; line-height: .9;
   font-variant-numeric: tabular-nums; letter-spacing: -2px;
   color: #eef4ff; text-shadow: 0 0 24px rgba(65,176,245,.5);
 }
@@ -201,7 +201,7 @@ body:has(.hud) #content { padding: 0; }
 .ro { text-align: center; }
 .ro-label { font-size: clamp(11px, 2.2vw, 15px); color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
 .ro-row { display: flex; align-items: baseline; gap: 5px; justify-content: center; }
-.ro-val { font-size: clamp(32px, min(7vw, 7.2vh), 68px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: #eef4ff; text-shadow: 0 0 16px rgba(120,160,210,.3); line-height: 1; }
+.ro-val { font-size: clamp(34px, min(7.5vw, 7.2vh), 74px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: #eef4ff; text-shadow: 0 0 16px rgba(120,160,210,.3); line-height: 1; }
 .ro-val.stale { opacity: .4; }
 .ro-unit { font-size: clamp(13px, 2.6vw, 20px); color: var(--dim); }
 .ro-stack { display: flex; flex-direction: column; gap: 6px; }
@@ -209,7 +209,7 @@ body:has(.hud) #content { padding: 0; }
 .ro-lineitem .ro-sub { font-size: clamp(9px, 1.8vw, 12px); color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1px; }
 
 @media (max-width: 620px) {
-  .dial { gap: clamp(10px, 2.5vh, 26px); width: 100%; }
+  .dial { gap: clamp(14px, 3.5vh, 40px); width: 100%; }
   .dial-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -218,11 +218,13 @@ body:has(.hud) #content { padding: 0; }
     width: 100%;
   }
   .dial-row > .ro-cell { justify-content: center; min-width: 0; overflow: hidden; }
-  .ro-val { font-size: clamp(22px, 7vw, 40px); }
+  .ro-val { font-size: clamp(34px, 10.5vw, 60px); }
   .ro-unit { font-size: clamp(10px, 2.3vw, 14px); }
   .ro-label { font-size: clamp(9px, 2.3vw, 12px); }
-  .dial-mid { width: clamp(190px, 60vw, 320px); }
+  .dial-mid { width: clamp(240px, 78vw, 440px); }
   .dial-aura { width: 120%; }
+  /* battery bottom-left, cabin/outside bottom-right; odometer hidden (low priority) */
+  .odo-cell { display: none; }
 }
 
 /* short screens (phone in landscape on a dash mount): lay readouts to the

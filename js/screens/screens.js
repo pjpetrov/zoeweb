@@ -85,7 +85,7 @@ export class DashboardScreen extends Screen {
           el('div', { class: 'dial-mid' }, aura, el('div', { class: 'dial-ring' }, speed.root)),
           el('div', { class: 'dial-row bottom' },
             el('div', { class: 'ro-cell' }, battery),
-            el('div', { class: 'ro-cell' }, odo.root),
+            el('div', { class: 'ro-cell odo-cell' }, odo.root),
             el('div', { class: 'ro-cell' }, climate)))),
     );
 
