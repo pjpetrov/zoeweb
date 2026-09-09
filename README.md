@@ -15,13 +15,17 @@ the same data the Android app can.
 
 ## Screenshots
 
-| Dashboard | Battery (96-cell heatmap) |
-|---|---|
-| ![Dashboard](screenshots/dashboard.png) | ![Battery](screenshots/battery.png) |
+Full-screen, game-style HUD dashboard — a big neon speed dial with the power
+drawn as a colour aura (blue under power, green during regen) and the kW
+embedded under the speed, surrounded by live readouts. Responsive and legible
+in the car; a flip button rotates it 180° for an upside-down dash mount, and it
+keeps the screen awake.
 
-| Driving | Charging |
+![Dashboard](screenshots/dashboard.png)
+
+| Battery (96-cell heatmap) | Charging |
 |---|---|
-| ![Driving](screenshots/driving.png) | ![Charging](screenshots/charging.png) |
+| ![Battery](screenshots/battery.png) | ![Charging](screenshots/charging.png) |
 
 ![Service procedures](screenshots/service.png)
 
@@ -31,7 +35,7 @@ the same data the Android app can.
 
 | Screen | What it shows |
 |---|---|
-| Dashboard | speed & power gauges, SOC, range, plug/charge state, 12V battery, temps |
+| Dashboard | full-screen HUD: neon speed dial, power/regen aura + kW, SOC, range, consumption, odometer, battery/cabin/outside temps; screen-flip + keep-awake |
 | Driving | speed, pedal, drive/brake torque bars, odometer, trip meter |
 | Battery | real/user SOC, SOH, pack V/A, **96 cell voltages heatmap**, module temperatures heatmap, battery serial, charge counters |
 | Charging | charger state, pilot current, phase voltages/currents, ground resistance, DC power, live charging graph |
