@@ -376,8 +376,11 @@ function tcuCard(ctx) {
 
   /** Try to wake a sleeping TCU: tester-present flood + session, a few times. */
   const wake = async ecu => {
-    for (let i = 0; i < 5; i++) {
-      await ctx.uds.raw(ecu, '3e00', { timeout: 500 }).catch(() => {});
+    // functional broadcast tester-present can wake a whole sleeping bus segment
+    const fEcu = { toIdHex: '7df', fromIdHex: ecu.fromIdHex, isExtended: false };
+    for (let i = 0; i < 8; i++) {
+      await ctx.uds.raw(fEcu, '3e00', { timeout: 300 }).catch(() => {});
+      await ctx.uds.raw(ecu, '3e00', { timeout: 400 }).catch(() => {});
       // the TCU's real sessions (DDT): 10c0 extended, 1081 default
       const ok = await ctx.uds.raw(ecu, '10c0', { timeout: 800 }).catch(() =>
         ctx.uds.raw(ecu, '1081', { timeout: 800 }).catch(() => null));
@@ -418,11 +421,12 @@ function tcuCard(ctx) {
       } catch (_) {}
     }
     if (!reachable) {
-      log.line('err', '! No answer from the TCU.');
-      log.line('hint', 'The TCU is on the vehicle CAN and IS reachable on the normal OBD connector (others have ' +
-        'read it and hard-reset it with DDT4All). A silent read almost always means it is asleep — put the car in ' +
-        'READY (foot on brake, press Start), keep it awake, and run this again. It is NOT the R-Link — no ' +
-        'pin-12/13 cable is needed for the TCU.');
+      log.line('err', '! No answer from the TCU (not even a reboot ACK).');
+      log.line('hint', 'A powered ECU on the same bus would ACK instantly, so this means the TCU is NOT on the ' +
+        'CAN your dongle sees. First confirm the car is in READY (foot on brake, press Start). If it stays silent, ' +
+        'the TCU is on the MULTIMEDIA CAN (like the R-Link) and needs the rewired cable: ELM pin 6 -> car pin 13, ' +
+        'pin 14 -> car pin 12. For remote climate/status that works without any of this, use OVMS. (Some Zoes also ' +
+        'have the TCU unplugged behind the heater panel.)');
       return;
     }
     log.line('rx', '✓ TCU is reachable — reading config…');
