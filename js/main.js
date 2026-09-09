@@ -140,6 +140,16 @@ class App {
     this.$led = document.getElementById('led');
     this.$connBtn.addEventListener('click', () => this.connected ? this.disconnect() : this.connect());
 
+    // flip the whole screen 180° for an upside-down mounted device
+    const flipBtn = document.getElementById('flip-btn');
+    const applyFlip = on => { document.body.classList.toggle('flip', on); flipBtn.classList.toggle('active', on); };
+    applyFlip(localStorage.getItem('zoe.flip') === '1');
+    flipBtn.addEventListener('click', () => {
+      const on = !document.body.classList.contains('flip');
+      localStorage.setItem('zoe.flip', on ? '1' : '0');
+      applyFlip(on);
+    });
+
     for (const s of this.screens) {
       const b = el('button', { class: 'nav-btn', 'data-id': s.id, onclick: () => location.hash = s.id },
         el('span', { class: 'nav-icon' }, s.icon), el('span', {}, s.title));

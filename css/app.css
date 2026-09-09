@@ -31,6 +31,11 @@ body {
 #status-text { flex: 1; color: var(--dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #status-text.warn { color: var(--warn); }
 #led { width: 10px; height: 10px; border-radius: 50%; background: #333c48; flex: none; transition: background .1s; }
+.icon-btn { background: none; border: 1px solid var(--border); color: var(--fg); border-radius: 8px; width: 32px; height: 32px; font-size: 17px; cursor: pointer; flex: none; line-height: 1; }
+.icon-btn:hover { background: var(--panel2); }
+.icon-btn.active { color: var(--accent); border-color: var(--accent); }
+/* flip the entire app for an upside-down mounted screen */
+body.flip { transform: rotate(180deg); transform-origin: 50% 50%; }
 #led.on { background: var(--good); box-shadow: 0 0 8px var(--good); }
 
 /* layout */
