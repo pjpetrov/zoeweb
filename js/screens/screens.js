@@ -3,7 +3,7 @@
  * activities (Dashboard, Driving, Battery, Charging, Range, Climate, Tires,
  * Braking, Consumption).
  */
-import { el, tile, gauge, hbar, heatmap, timeplot, section } from '../ui/widgets.js';
+import { el, tile, gauge, hbar, heatmap, timeplot, section, ringGauge, powerBar, chip } from '../ui/widgets.js';
 import { Sid } from '../core/sid.js';
 
 export class Screen {
@@ -37,32 +37,40 @@ export class Screen {
 export class DashboardScreen extends Screen {
   constructor() { super('dashboard', 'Dashboard', '🏠'); }
   render(c, ctx) {
-    const speed = gauge('Speed', 0, 150, 'km/h');
-    const power = gauge('Power', -45, 80, 'kW', { zeroCentered: true, decimals: 1 });
-    const soc = tile('State of charge', '%', 'big');
-    const range = tile('Range', 'km', 'big');
-    const plug = tile('Plug');
-    const charging = tile('Charging');
-    const aux = tile('12V battery', 'V');
-    const hvtemp = tile('Battery temp', '°C');
-    const avg = tile('Avg consumption', 'kWh/100km');
-    const energy = tile('Available energy', 'kWh');
+    const speed = ringGauge('Speed', 0, 150, 'km/h', { size: 260 });
+    const pbar = powerBar(80, 45, { unit: 'kW' });
+
+    const soc = chip('State of charge', '%', '🔋');
+    const battTemp = chip('Battery temp', '°C', '🌡️');
+    const avg = chip('Avg consumption', 'kWh/100km', '📊');
+    const cabin = chip('Cabin', '°C', '💺');
+    const outside = chip('Outside', '°C', '🌤️');
+    const range = chip('Range', 'km', '🛣️');
+
+    this._widgets = [speed, pbar];
 
     c.append(
-      el('div', { class: 'gauges' }, speed.root, power.root),
-      el('div', { class: 'grid' }, soc.root, range.root, plug.root, charging.root,
-        aux.root, hvtemp.root, avg.root, energy.root),
+      el('div', { class: 'dash' },
+        el('div', { class: 'dash-hero' },
+          el('div', { class: 'dash-speed' }, speed.root),
+          el('div', { class: 'dash-power' }, pbar.root)),
+        el('div', { class: 'dash-chips' },
+          soc.root, range.root, avg.root, battTemp.root, cabin.root, outside.root)),
     );
-    this.bind(ctx, Sid.RealSpeed, speed, 500, f => f.value);
-    this.bind(ctx, Sid.DcPowerOut, power, 500, f => f.value);
+
+    this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
+    this.bind(ctx, Sid.DcPowerOut, pbar, 200, f => f.value);
     this.bind(ctx, Sid.UserSoC, soc, 3000);
     this.bind(ctx, Sid.RangeEstimate, range, 3000);
-    this.bind(ctx, Sid.PlugConnected, plug, 3000, f => ({ format: () => f.value >= 1 ? 'connected' : 'unplugged' }));
-    this.bind(ctx, Sid.ChargingStatusDisplay, charging, 3000, f => ({ format: () => f.value >= 1 ? 'charging' : 'not charging' }));
-    this.bind(ctx, Sid.Aux12V, aux, 5000);
-    this.bind(ctx, Sid.HvTemp, hvtemp, 5000);
     this.bind(ctx, Sid.AverageConsumption, avg, 5000);
-    this.bind(ctx, Sid.AvailableEnergy, energy, 5000);
+    this.bind(ctx, Sid.HvTemp, battTemp, 5000);
+    this.bind(ctx, Sid.CabinTemp, cabin, 5000);
+    this.bind(ctx, Sid.OutsideTemp, outside, 5000);
+  }
+
+  unmount(ctx) {
+    for (const w of this._widgets || []) w.stop?.();
+    super.unmount(ctx);
   }
 }
 

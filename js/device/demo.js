@@ -219,6 +219,8 @@ export class DemoTransport {
     if (/tyre|tire/.test(n) && u.includes('bar')) return 2.4;
     if (u === 'mbar') return 2400;
     if (/pressure/.test(n)) return 5.2;
+    if (/incar|cabin/.test(n)) return 21.5;
+    if (/external|outside|exterieure|exter/.test(n)) return 12 + 2 * Math.sin(t / 40);
     if (/temp/.test(n) || u === '°c' || u === 'ºc') return 24 + 3 * Math.sin(f.from / 7);
     if (/12v|14v|aux.*batt/.test(n) && u === 'v') return 14.1;
     if (u === 'kwh/100km') return 14.2;

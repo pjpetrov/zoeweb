@@ -187,6 +187,144 @@ export function timeplot(seriesDefs, opts = {}) {
   };
 }
 
+/** Modern ring gauge: sweeping gradient arc with a big inline value + unit. */
+export function ringGauge(label, min, max, unit, opts = {}) {
+  const size = opts.size || 230;
+  const canvas = el('canvas', { width: size * 2, height: size * 2, style: `width:${size}px;height:${size}px` });
+  const big = el('div', { class: 'ring-val' }, '—');
+  const sub = el('div', { class: 'ring-unit' }, unit);
+  const cap = el('div', { class: 'ring-cap' }, label);
+  const root = el('div', { class: 'ring' }, canvas,
+    el('div', { class: 'ring-center' }, big, sub), cap);
+  const ctx = canvas.getContext('2d');
+  let current = NaN, shown = NaN;
+
+  function draw() {
+    const s = size * 2, c = s / 2, r = c - 20;
+    ctx.clearRect(0, 0, s, s);
+    const css = getComputedStyle(document.documentElement);
+    const accent = opts.color || css.getPropertyValue('--accent').trim() || '#41b0f5';
+    const neg = opts.negColor || css.getPropertyValue('--good').trim() || '#41d98c';
+    const a0 = Math.PI * 0.72, a1 = Math.PI * 2.28;
+    ctx.lineCap = 'round';
+    // track
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = 'rgba(128,140,160,.14)';
+    ctx.beginPath(); ctx.arc(c, c, r, a0, a1); ctx.stroke();
+    // value arc
+    if (!Number.isNaN(shown)) {
+      const frac = Math.min(1, Math.max(0, (shown - min) / (max - min)));
+      let from = a0, to = a0 + (a1 - a0) * frac;
+      if (opts.zeroCentered) {
+        const zero = a0 + (a1 - a0) * (0 - min) / (max - min);
+        from = Math.min(zero, to); to = Math.max(zero, to);
+      }
+      const g = ctx.createLinearGradient(0, 0, s, s);
+      const col = (opts.zeroCentered && shown < 0) ? neg : accent;
+      g.addColorStop(0, col + '88'); g.addColorStop(1, col);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 20;
+      ctx.beginPath(); ctx.arc(c, c, r, from, to); ctx.stroke();
+      // glowing tip
+      ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = col;
+      ctx.fillStyle = col;
+      const ta = opts.zeroCentered && shown < 0 ? from : to;
+      ctx.beginPath(); ctx.arc(c + Math.cos(ta) * r, c + Math.sin(ta) * r, 8, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    // ticks
+    ctx.strokeStyle = 'rgba(128,140,160,.35)'; ctx.lineWidth = 2;
+    for (let i = 0; i <= 8; i++) {
+      const a = a0 + (a1 - a0) * i / 8;
+      ctx.beginPath();
+      ctx.moveTo(c + Math.cos(a) * (r - 22), c + Math.sin(a) * (r - 22));
+      ctx.lineTo(c + Math.cos(a) * (r - 30), c + Math.sin(a) * (r - 30));
+      ctx.stroke();
+    }
+  }
+
+  // smooth animation toward target
+  function tick() {
+    if (!Number.isNaN(current)) {
+      if (Number.isNaN(shown)) shown = current;
+      else shown += (current - shown) * 0.25;
+      if (Math.abs(current - shown) < 0.05) shown = current;
+    }
+    big.textContent = Number.isNaN(shown) ? '—' : shown.toFixed(opts.decimals ?? 0);
+    draw();
+    root._raf = requestAnimationFrame(tick);
+  }
+  tick();
+  return {
+    root,
+    update(f) { current = typeof f === 'number' ? f : f.value; },
+    stop() { cancelAnimationFrame(root._raf); },
+  };
+}
+
+/** Tesla-style vertical power/regen bar: fills up from centre for drive power,
+ *  down (green) for regeneration. */
+export function powerBar(maxDrive, maxRegen, opts = {}) {
+  const up = el('div', { class: 'pbar-fill pbar-up' });
+  const down = el('div', { class: 'pbar-fill pbar-down' });
+  const track = el('div', { class: 'pbar-track' },
+    up, down, el('div', { class: 'pbar-mid' }));
+  const val = el('div', { class: 'pbar-val' }, '—');
+  const unit = el('div', { class: 'pbar-unit' }, opts.unit || 'kW');
+  const tag = el('div', { class: 'pbar-tag' }, '');
+  const root = el('div', { class: 'pbar' },
+    el('div', { class: 'pbar-head' }, val, unit),
+    track, tag);
+  let cur = NaN, shown = NaN;
+
+  function render() {
+    if (Number.isNaN(shown)) { up.style.height = down.style.height = '0'; val.textContent = '—'; tag.textContent = ''; return; }
+    val.textContent = (shown >= 0 ? '+' : '') + shown.toFixed(1);
+    if (shown >= 0) {
+      up.style.height = Math.min(100, shown / maxDrive * 100) + '%';
+      down.style.height = '0';
+      tag.textContent = shown > 0.3 ? 'POWER' : '';
+      tag.className = 'pbar-tag';
+    } else {
+      down.style.height = Math.min(100, -shown / maxRegen * 100) + '%';
+      up.style.height = '0';
+      tag.textContent = 'REGEN';
+      tag.className = 'pbar-tag regen';
+    }
+  }
+  function tick() {
+    if (!Number.isNaN(cur)) {
+      shown = Number.isNaN(shown) ? cur : shown + (cur - shown) * 0.3;
+      if (Math.abs(cur - shown) < 0.02) shown = cur;
+    }
+    render();
+    root._raf = requestAnimationFrame(tick);
+  }
+  tick();
+  return {
+    root,
+    update(f) { cur = typeof f === 'number' ? f : f.value; },
+    stop() { cancelAnimationFrame(root._raf); },
+  };
+}
+
+/** Compact stat chip with icon, big value, small label. */
+export function chip(label, unit, icon = '') {
+  const v = el('div', { class: 'chip-val' }, '—');
+  const root = el('div', { class: 'chip' },
+    el('div', { class: 'chip-top' }, icon ? el('span', { class: 'chip-ico' }, icon) : null,
+      el('span', { class: 'chip-label' }, label)),
+    el('div', { class: 'chip-row' }, v, el('span', { class: 'chip-unit' }, unit)));
+  return {
+    root,
+    update(f) {
+      v.textContent = f.format ? f.format() : (typeof f === 'number' ? f.toFixed(1) : f.value);
+      v.classList.toggle('stale', f.lastUpdated && Date.now() - f.lastUpdated > 15000);
+    },
+    set(t) { v.textContent = t; },
+  };
+}
+
 export function section(title, ...children) {
   return el('div', { class: 'card' }, title ? el('h3', {}, title) : null, ...children);
 }

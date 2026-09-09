@@ -26,6 +26,8 @@ export const Sid = {
   AvailableChargingPower: '427.40',
   AvailableEnergy: '427.49',
   HvTemp: '42e.44',
+  OutsideTemp: '656.48',
+  CabinTemp: '764.6121.26',
   RealSpeed: '5d7.0',
   AuxStatus: '638.37',
   WorstAverageConsumption: '62d.0',
