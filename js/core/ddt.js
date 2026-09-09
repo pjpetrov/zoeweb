@@ -1,5 +1,5 @@
 /*
- * ZoeWeb — DDT4All engine.
+ * ZoeWeb — DDT4All-compatible ECU engine (independent reimplementation).
  *
  * Parses a DDT4All ECU definition (the JSON files DDT4All / DDT2000 use) and
  * decodes/encodes its parameters, so ZoeWeb can drive ANY Renault ECU the same

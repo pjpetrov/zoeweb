@@ -46,7 +46,7 @@ keeps the screen awake.
 | Braking | brake blending: driver request vs regen vs friction |
 | Fault codes | read DTCs per ECU or scan the whole car, decoded with CanZE's DTC catalogs; separates real faults from "self-test not yet run" entries |
 | All data | browse and live-poll *every* known field of any ECU, with search |
-| Expert (DDT) | load DDT4All ECU definitions (zip or json) and read/write *any* Renault ECU's parameters, decoded with its own units/enums |
+| Expert (DDT) | DDT4All-*compatible*: load DDT4All/DDT2000 ECU definitions (zip or json) and read/write *any* Renault ECU's parameters, decoded with its own units/enums |
 
 ## Beyond CanZE — Service procedures
 
@@ -116,14 +116,14 @@ misconfigure or permanently damage an ECU. Know your Renault DDT parameter
 documentation before writing anything, keep the car stationary, and never use
 this while driving. You alone are responsible for what you send to your car.
 
-## Beyond CanZE — Expert mode (DDT4All ported)
+## Beyond CanZE — Expert mode (DDT4All-compatible)
 
 ![Expert (DDT) page](screenshots/expert.png)
 
-The **Expert (DDT)** page ports DDT4All into the browser with a cleaner UI. It
-reads DDT4All / DDT2000 **ECU definition files** and drives *any* Renault ECU
-through your dongle — the same universal capability as DDT4All, without the Qt
-interface.
+The **Expert (DDT)** page is an independent, browser-based engine that reads
+**DDT4All / DDT2000 ECU definition files** and drives *any* Renault ECU through
+your dongle — the same universal capability as DDT4All, with a cleaner UI. It is
+a fresh reimplementation of the file-format reader, not a port of DDT4All's code.
 
 - **Load the whole `ecu.zip`** (unzipped in the browser, no external library) or
   individual `.json` ECU files. A **searchable, sorted picker** lets you filter
@@ -135,7 +135,9 @@ interface.
   of the exact original request.
 
 The proprietary Renault ECU database is **not** bundled — you load your own DDT
-files, exactly as DDT4All itself requires.
+files, exactly as DDT4All itself requires. Credit to the
+[DDT4All project](https://github.com/cedricp/ddt4all) for the tool and the ECU
+definition format this mode is compatible with; ZoeWeb contains none of its code.
 
 ## Running it
 
