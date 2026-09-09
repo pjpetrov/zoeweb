@@ -65,9 +65,15 @@ export class DashboardScreen extends Screen {
     // readouts embedded around the dial
     const avg = readout('Consumption', 'kWh/100km');
     const range = readout('Range', 'km');
-    const battery = readout('Battery', '');
-    const climate = readout('Cabin / Outside', '');
     const odo = readout('Odometer', 'km');
+    const battery = this.stack(ctx, [
+      { sid: Sid.UserSoC, unit: '%', dec: 0, interval: 3000 },
+      { sid: Sid.HvTemp, unit: '°C', dec: 0, interval: 5000 },
+    ]);
+    const climate = this.stack(ctx, [
+      { sid: Sid.CabinTemp, unit: '°C', dec: 0, interval: 5000 },
+      { sid: Sid.OutsideTemp, unit: '°C', dec: 0, interval: 5000 },
+    ]);
 
     c.append(
       el('div', { class: 'hud' },
@@ -76,9 +82,9 @@ export class DashboardScreen extends Screen {
           el('div', { class: 'ro-cell tl' }, avg.root),
           el('div', { class: 'ro-cell tc' }, range.root),
           el('div', { class: 'dial-ring' }, speed.root),
-          el('div', { class: 'ro-cell bl' }, battery.root),
+          el('div', { class: 'ro-cell bl' }, battery),
           el('div', { class: 'ro-cell bc' }, odo.root),
-          el('div', { class: 'ro-cell br' }, climate.root))),
+          el('div', { class: 'ro-cell br' }, climate))),
     );
 
     this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
@@ -94,28 +100,17 @@ export class DashboardScreen extends Screen {
     this.bind(ctx, Sid.RangeEstimate, range, 3000);
     this.bind(ctx, Sid.AverageConsumption, avg, 5000);
     this.bind(ctx, Sid.EvcOdometer, odo, 8000);
-
-    // combined readouts: battery = SOC% · temp°C, climate = cabin° / outside°
-    this.combo(ctx, battery, [Sid.UserSoC, Sid.HvTemp], 3000,
-      (soc, t) => `${fmtN(soc, 0, '%')} · ${fmtN(t, 0, '°C')}`);
-    this.combo(ctx, climate, [Sid.CabinTemp, Sid.OutsideTemp], 5000,
-      (cab, out) => `${fmtN(cab, 0, '°')} / ${fmtN(out, 0, '°C')}`);
   }
 
-  /** Bind several fields to one readout, reformatting on any change. */
-  combo(ctx, widget, sids, intervalMs, fmt) {
-    const fields = [];
-    for (const sid of sids) {
-      ctx.poller.subscribe(sid, intervalMs, this.id);
-      fields.push(ctx.poller.getField(sid));
+  /** Two (or more) values stacked one under the other, each on its own line. */
+  stack(ctx, items) {
+    const root = el('div', { class: 'ro ro-stack' });
+    for (const it of items) {
+      const v = el('span', { class: 'ro-val' }, '—');
+      root.append(el('div', { class: 'ro-row' }, v, el('span', { class: 'ro-unit' }, it.unit)));
+      this.bind(ctx, it.sid, { update: f => { v.textContent = fmtN(f.value, it.dec, ''); } }, it.interval);
     }
-    const refresh = () => widget.set(fmt(...fields.map(f => f && typeof f.value === 'number' ? f.value : NaN)));
-    for (const f of fields) {
-      if (!f) continue;
-      f.listeners.add(refresh);
-      this._bindings.push({ field: f, listener: refresh });
-    }
-    refresh();
+    return root;
   }
 
   unmount(ctx) {
