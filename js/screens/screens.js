@@ -39,6 +39,7 @@ export class Screen {
 export class DashboardScreen extends Screen {
   constructor() { super('dashboard', 'Dashboard', '🏠'); }
   render(c, ctx) {
+    this._acquireWakeLock();
     const speed = ringGauge('km/h', 0, 150, 'SPEED', { hud: true });
     const aura = el('div', { class: 'dial-aura' });
     const kw = el('div', { class: 'dial-kw' }, '—');
@@ -78,13 +79,14 @@ export class DashboardScreen extends Screen {
     c.append(
       el('div', { class: 'hud' },
         el('div', { class: 'dial' },
-          aura,
-          el('div', { class: 'ro-cell tl' }, avg.root),
-          el('div', { class: 'ro-cell tr' }, range.root),
-          el('div', { class: 'dial-ring' }, speed.root),
-          el('div', { class: 'ro-cell bl' }, battery),
-          el('div', { class: 'ro-cell bc' }, odo.root),
-          el('div', { class: 'ro-cell br' }, climate))),
+          el('div', { class: 'dial-row top' },
+            el('div', { class: 'ro-cell' }, avg.root),
+            el('div', { class: 'ro-cell' }, range.root)),
+          el('div', { class: 'dial-mid' }, aura, el('div', { class: 'dial-ring' }, speed.root)),
+          el('div', { class: 'dial-row bottom' },
+            el('div', { class: 'ro-cell' }, battery),
+            el('div', { class: 'ro-cell' }, odo.root),
+            el('div', { class: 'ro-cell' }, climate)))),
     );
 
     this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
@@ -120,7 +122,28 @@ export class DashboardScreen extends Screen {
 
   unmount(ctx) {
     for (const w of this._widgets || []) w.stop?.();
+    this._releaseWakeLock();
     super.unmount(ctx);
+  }
+
+  /** Keep the screen awake while the dashboard is open (Screen Wake Lock API). */
+  async _acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      this._wakeLock = await navigator.wakeLock.request('screen');
+      // the lock drops when the tab is hidden — re-acquire on return
+      this._visHandler = () => {
+        if (document.visibilityState === 'visible' && !this._wakeLock) this._acquireWakeLock();
+      };
+      document.addEventListener('visibilitychange', this._visHandler);
+      this._wakeLock.addEventListener?.('release', () => { this._wakeLock = null; });
+    } catch (_) { /* denied or unsupported — ignore */ }
+  }
+
+  _releaseWakeLock() {
+    if (this._visHandler) { document.removeEventListener('visibilitychange', this._visHandler); this._visHandler = null; }
+    try { this._wakeLock?.release(); } catch (_) {}
+    this._wakeLock = null;
   }
 }
 
