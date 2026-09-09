@@ -347,6 +347,22 @@ export function socBar(opts = {}) {
   return { root, update(f) { cur = typeof f === 'number' ? f : f.value; }, stop() { cancelAnimationFrame(root._raf); } };
 }
 
+/** Boxless glowing readout (label + value) for embedding around the dial. */
+export function readout(label, unit) {
+  const v = el('div', { class: 'ro-val' }, '—');
+  const root = el('div', { class: 'ro' },
+    el('div', { class: 'ro-label' }, label),
+    el('div', { class: 'ro-row' }, v, el('span', { class: 'ro-unit' }, unit)));
+  return {
+    root,
+    update(f) {
+      v.textContent = f.format ? f.format() : (typeof f === 'number' ? f.toFixed(0) : f.value);
+      v.classList.toggle('stale', f.lastUpdated && Date.now() - f.lastUpdated > 20000);
+    },
+    set(t) { v.textContent = t; },
+  };
+}
+
 /** Compact stat chip with icon, big value, small label. */
 export function chip(label, unit, icon = '') {
   const v = el('div', { class: 'chip-val' }, '—');

@@ -3,7 +3,7 @@
  * activities (Dashboard, Driving, Battery, Charging, Range, Climate, Tires,
  * Braking, Consumption).
  */
-import { el, tile, gauge, hbar, heatmap, timeplot, section, ringGauge, powerBar, socBar, chip } from '../ui/widgets.js';
+import { el, tile, gauge, hbar, heatmap, timeplot, section, ringGauge, readout } from '../ui/widgets.js';
 import { Sid } from '../core/sid.js';
 
 export class Screen {
@@ -38,35 +38,69 @@ export class DashboardScreen extends Screen {
   constructor() { super('dashboard', 'Dashboard', '🏠'); }
   render(c, ctx) {
     const speed = ringGauge('km/h', 0, 150, 'SPEED', { hud: true });
-    const soc = socBar({ label: 'CHARGE' });
-    const pbar = powerBar(80, 45, { unit: 'kW' });
+    const aura = el('div', { class: 'dial-aura' });
+    const kw = el('div', { class: 'dial-kw' }, '—');
+    speed.root.querySelector('.ring-center').append(kw);
+    this._widgets = [speed];
 
-    const range = chip('Range', 'km', '🛣️');
-    const avg = chip('Consumption', 'kWh/100km', '📊');
-    const battTemp = chip('Battery', '°C', '🔋');
-    const cabin = chip('Cabin', '°C', '💺');
-    const outside = chip('Outside', '°C', '🌤️');
+    // power → aura colour/intensity + embedded kW readout, eased for smoothness
+    let curP = NaN, shownP = NaN;
+    const paint = () => {
+      if (!Number.isNaN(curP)) shownP = Number.isNaN(shownP) ? curP : shownP + (curP - shownP) * 0.25;
+      if (!Number.isNaN(shownP)) {
+        const drive = shownP >= 0;
+        const rgb = drive ? '65,176,245' : '65,217,140';
+        const mag = Math.min(1, Math.abs(shownP) / 60);
+        aura.style.background = `radial-gradient(circle at 50% 45%, rgba(${rgb},${0.06 + mag * 0.4}), rgba(${rgb},0) 60%)`;
+        kw.textContent = `${drive ? '▲' : '▼'} ${Math.abs(shownP).toFixed(1)} kW`;
+        kw.style.color = drive ? 'var(--accent)' : 'var(--good)';
+      }
+      this._paintRaf = requestAnimationFrame(paint);
+    };
+    paint();
+    this._widgets.push({ stop: () => cancelAnimationFrame(this._paintRaf) });
 
-    this._widgets = [speed, soc, pbar];
+    // readouts embedded around the dial
+    const range = readout('Range', 'km');
+    const soc = readout('Charge', '%');
+    const avg = readout('Consumption', 'kWh/100km');
+    const cabin = readout('Cabin', '°C');
+    const outside = readout('Outside', '°C');
+    const battTemp = readout('Battery', '°C');
+    const odo = readout('Odometer', 'km');
 
     c.append(
       el('div', { class: 'hud' },
-        el('div', { class: 'hud-stage' },
-          el('div', { class: 'hud-side' }, soc.root),
-          el('div', { class: 'hud-ring' }, speed.root),
-          el('div', { class: 'hud-side' }, pbar.root)),
-        el('div', { class: 'hud-readouts' },
-          range.root, avg.root, battTemp.root, cabin.root, outside.root)),
+        el('div', { class: 'dial' },
+          aura,
+          el('div', { class: 'ro-cell tl' }, range.root),
+          el('div', { class: 'ro-cell tc' }, soc.root),
+          el('div', { class: 'ro-cell tr' }, avg.root),
+          el('div', { class: 'ro-cell ml' }, cabin.root),
+          el('div', { class: 'dial-ring' }, speed.root),
+          el('div', { class: 'ro-cell mr' }, outside.root),
+          el('div', { class: 'ro-cell bl' }, battTemp.root),
+          el('div', { class: 'ro-cell bc' }, odo.root),
+          el('div', { class: 'ro-cell br' }))),
     );
 
     this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
-    this.bind(ctx, Sid.UserSoC, soc, 3000, f => f.value);
-    this.bind(ctx, Sid.DcPowerOut, pbar, 200, f => f.value);
+    // custom power binding drives the aura
+    ctx.poller.subscribe(Sid.DcPowerOut, 200, this.id);
+    const pf = ctx.poller.getField(Sid.DcPowerOut);
+    if (pf) {
+      const l = f => { curP = f.value; };
+      pf.listeners.add(l);
+      this._bindings.push({ field: pf, listener: l });
+      if (pf.lastUpdated) curP = pf.value;
+    }
     this.bind(ctx, Sid.RangeEstimate, range, 3000);
+    this.bind(ctx, Sid.UserSoC, soc, 3000);
     this.bind(ctx, Sid.AverageConsumption, avg, 5000);
-    this.bind(ctx, Sid.HvTemp, battTemp, 5000);
     this.bind(ctx, Sid.CabinTemp, cabin, 5000);
     this.bind(ctx, Sid.OutsideTemp, outside, 5000);
+    this.bind(ctx, Sid.HvTemp, battTemp, 5000);
+    this.bind(ctx, Sid.EvcOdometer, odo, 8000);
   }
 
   unmount(ctx) {
