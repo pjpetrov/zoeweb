@@ -80,7 +80,7 @@ export class DashboardScreen extends Screen {
         el('div', { class: 'dial' },
           aura,
           el('div', { class: 'ro-cell tl' }, avg.root),
-          el('div', { class: 'ro-cell tc' }, range.root),
+          el('div', { class: 'ro-cell tr' }, range.root),
           el('div', { class: 'dial-ring' }, speed.root),
           el('div', { class: 'ro-cell bl' }, battery),
           el('div', { class: 'ro-cell bc' }, odo.root),
