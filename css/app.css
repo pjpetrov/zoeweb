@@ -116,6 +116,11 @@ body.flip { transform: rotate(180deg); transform-origin: 50% 50%; }
 .scroll-x { overflow-x: auto; }
 .mono { font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
 
+.picker-list { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-top: 6px; }
+.picker-row { text-align: left; background: none; border: 0; color: var(--fg); padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.picker-row:hover { background: var(--panel2); }
+.picker-row.sel { background: var(--accent); color: #08131c; font-weight: 600; }
+
 /* pro console */
 .console {
   background: #0b0f14; border: 1px solid var(--border); border-radius: 8px;
