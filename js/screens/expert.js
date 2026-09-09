@@ -12,6 +12,26 @@ import { listZip, extractText } from '../core/unzip.js';
 
 const STORE = 'zoe.ddt.files.v1';
 
+// predefined ECU-type filters — each matches any of its name substrings
+const CATEGORIES = [
+  ['Battery / BMS', ['bms', 'lbc', 'batt']],
+  ['BCM / body', ['bcm', 'uch']],
+  ['EVC / VCM', ['evc', 'hcm', 'vcm']],
+  ['TCU / telematics', ['tcu', 'dcm']],
+  ['Cluster', ['tdb', 'cluster', 'miu']],
+  ['ABS / ESC', ['abs', 'esc', 'esp', 'vdc']],
+  ['Charger', ['bcb', 'obc', 'charg', 'chameleon']],
+  ['Motor / inverter', ['peb', 'inv', 'invme', 'invhsg']],
+  ['Airbag / SRS', ['acu', 'airbag', 'aibag', 'srs']],
+  ['Steering', ['dae', 'eps', 'pas']],
+  ['Climate', ['clim', 'hvac']],
+  ['Park assist', ['upa', 'sonar', 'park', 'apb']],
+  ['Nav / R-Link', ['mfd', 'rlink', 'r-link', 'nav', 'radio', 'media', 'itm']],
+  ['Gateway', ['s-gw', 'gateway', 'plc', 'plgw', 'gw3']],
+  ['Lights / USM', ['usm', 'upc', 'light']],
+  ['TPMS', ['tpms', 'sspp', 'ssp']],
+];
+
 export class ExpertScreen extends Screen {
   constructor() {
     super('expert', 'Expert (DDT)', '🧩');
@@ -99,11 +119,32 @@ export class ExpertScreen extends Screen {
     const search = el('input', { class: 'input', type: 'search', placeholder: 'type to filter ECUs…',
       oninput: () => { clearTimeout(this._deb); this._deb = setTimeout(refreshList, 150); } });
 
+    // category chip row
+    let activeCat = null; // array of substrings, or null for all
+    const chipRow = el('div', { class: 'toolbar' });
+    const chips = [];
+    const allChip = el('button', { class: 'cat-chip sel', onclick: () => setCat(null, allChip) }, 'All');
+    chipRow.append(allChip);
+    for (const [label, pats] of CATEGORIES) {
+      const chip = el('button', { class: 'cat-chip', onclick: () => setCat(pats, chip) }, label);
+      chips.push(chip);
+      chipRow.append(chip);
+    }
+    function setCat(pats, chipEl) {
+      activeCat = pats;
+      [allChip, ...chips].forEach(c => c.classList.remove('sel'));
+      chipEl.classList.add('sel');
+      refreshList();
+    }
+
     const self = this;
     function refreshList() {
       const idx = self._index();
       const q = search.value.trim().toLowerCase();
-      const filtered = q ? idx.filter(i => i.label.toLowerCase().includes(q)) : idx;
+      let filtered = activeCat
+        ? idx.filter(i => activeCat.some(p => i.label.toLowerCase().includes(p)))
+        : idx;
+      if (q) filtered = filtered.filter(i => i.label.toLowerCase().includes(q));
       listBox.replaceChildren();
       if (!idx.length) {
         status.textContent = 'No ECU definitions loaded.';
@@ -143,6 +184,7 @@ export class ExpertScreen extends Screen {
           '⚠️ Expert mode drives raw ECU requests from your DDT files. Reads are safe; writes change ECU ' +
           'configuration and are executed as defined — every write is backed up to the Backups screen. ' +
           'Car stationary, ignition on. Know what a parameter does before writing it.'),
+        chipRow,
         search,
         listBox),
       body,
