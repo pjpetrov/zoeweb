@@ -187,59 +187,71 @@ export function timeplot(seriesDefs, opts = {}) {
   };
 }
 
-/** Modern ring gauge: sweeping gradient arc with a big inline value + unit. */
+/** Modern ring gauge: sweeping gradient arc with a big inline value + unit.
+ *  Responsive — fills its container (sized by CSS). */
 export function ringGauge(label, min, max, unit, opts = {}) {
-  const size = opts.size || 230;
-  const canvas = el('canvas', { width: size * 2, height: size * 2, style: `width:${size}px;height:${size}px` });
+  const R = 460; // internal render resolution
+  const canvas = el('canvas', { width: R * 2, height: R * 2, style: 'width:100%;height:100%;display:block' });
   const big = el('div', { class: 'ring-val' }, '—');
   const sub = el('div', { class: 'ring-unit' }, unit);
   const cap = el('div', { class: 'ring-cap' }, label);
-  const root = el('div', { class: 'ring' }, canvas,
-    el('div', { class: 'ring-center' }, big, sub), cap);
+  const root = el('div', { class: 'ring ' + (opts.hud ? 'ring-hud' : '') }, canvas,
+    el('div', { class: 'ring-center' }, big, sub, cap));
   const ctx = canvas.getContext('2d');
+  const size = R;
   let current = NaN, shown = NaN;
 
   function draw() {
-    const s = size * 2, c = s / 2, r = c - 20;
+    const s = size * 2, c = s / 2, r = c - 48;
     ctx.clearRect(0, 0, s, s);
     const css = getComputedStyle(document.documentElement);
     const accent = opts.color || css.getPropertyValue('--accent').trim() || '#41b0f5';
     const neg = opts.negColor || css.getPropertyValue('--good').trim() || '#41d98c';
     const a0 = Math.PI * 0.72, a1 = Math.PI * 2.28;
+    const frac = Number.isNaN(shown) ? 0 : Math.min(1, Math.max(0, (shown - min) / (max - min)));
+    const col = (opts.zeroCentered && shown < 0) ? neg : accent;
+
+    // fine tick ring (game-style graduations)
+    ctx.save();
+    for (let i = 0; i <= 60; i++) {
+      const a = a0 + (a1 - a0) * i / 60;
+      const major = i % 10 === 0;
+      const lit = i / 60 <= frac;
+      ctx.strokeStyle = lit ? col : 'rgba(128,140,160,.22)';
+      ctx.lineWidth = major ? 6 : 3;
+      const inner = major ? r - 40 : r - 30;
+      if (lit) { ctx.shadowBlur = 12; ctx.shadowColor = col; } else ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(c + Math.cos(a) * r, c + Math.sin(a) * r);
+      ctx.lineTo(c + Math.cos(a) * inner, c + Math.sin(a) * inner);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // main track
     ctx.lineCap = 'round';
-    // track
-    ctx.lineWidth = 20;
-    ctx.strokeStyle = 'rgba(128,140,160,.14)';
-    ctx.beginPath(); ctx.arc(c, c, r, a0, a1); ctx.stroke();
-    // value arc
+    ctx.lineWidth = 22;
+    ctx.strokeStyle = 'rgba(128,140,160,.12)';
+    ctx.beginPath(); ctx.arc(c, c, r - 4, a0, a1); ctx.stroke();
+    // value arc with glow
     if (!Number.isNaN(shown)) {
-      const frac = Math.min(1, Math.max(0, (shown - min) / (max - min)));
       let from = a0, to = a0 + (a1 - a0) * frac;
       if (opts.zeroCentered) {
         const zero = a0 + (a1 - a0) * (0 - min) / (max - min);
         from = Math.min(zero, to); to = Math.max(zero, to);
       }
       const g = ctx.createLinearGradient(0, 0, s, s);
-      const col = (opts.zeroCentered && shown < 0) ? neg : accent;
-      g.addColorStop(0, col + '88'); g.addColorStop(1, col);
-      ctx.strokeStyle = g;
-      ctx.lineWidth = 20;
-      ctx.beginPath(); ctx.arc(c, c, r, from, to); ctx.stroke();
-      // glowing tip
-      ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = col;
-      ctx.fillStyle = col;
-      const ta = opts.zeroCentered && shown < 0 ? from : to;
-      ctx.beginPath(); ctx.arc(c + Math.cos(ta) * r, c + Math.sin(ta) * r, 8, 0, 7); ctx.fill();
+      g.addColorStop(0, col + '66'); g.addColorStop(1, col);
+      ctx.save();
+      ctx.shadowBlur = 30; ctx.shadowColor = col;
+      ctx.strokeStyle = g; ctx.lineWidth = 22;
+      ctx.beginPath(); ctx.arc(c, c, r - 4, from, to); ctx.stroke();
       ctx.restore();
-    }
-    // ticks
-    ctx.strokeStyle = 'rgba(128,140,160,.35)'; ctx.lineWidth = 2;
-    for (let i = 0; i <= 8; i++) {
-      const a = a0 + (a1 - a0) * i / 8;
-      ctx.beginPath();
-      ctx.moveTo(c + Math.cos(a) * (r - 22), c + Math.sin(a) * (r - 22));
-      ctx.lineTo(c + Math.cos(a) * (r - 30), c + Math.sin(a) * (r - 30));
-      ctx.stroke();
+      // glowing tip
+      ctx.save(); ctx.shadowBlur = 26; ctx.shadowColor = col; ctx.fillStyle = '#fff';
+      const ta = opts.zeroCentered && shown < 0 ? from : to;
+      ctx.beginPath(); ctx.arc(c + Math.cos(ta) * (r - 4), c + Math.sin(ta) * (r - 4), 9, 0, 7); ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -306,6 +318,33 @@ export function powerBar(maxDrive, maxRegen, opts = {}) {
     update(f) { cur = typeof f === 'number' ? f : f.value; },
     stop() { cancelAnimationFrame(root._raf); },
   };
+}
+
+/** Vertical battery bar: fills bottom-up, colour shifts green→amber→red by level. */
+export function socBar(opts = {}) {
+  const fill = el('div', { class: 'sbar-fill' });
+  const track = el('div', { class: 'sbar-track' }, fill, el('div', { class: 'sbar-cap' }));
+  const val = el('div', { class: 'sbar-val' }, '—');
+  const unit = el('div', { class: 'pbar-unit' }, '%');
+  const tag = el('div', { class: 'pbar-tag' }, opts.label || 'CHARGE');
+  const root = el('div', { class: 'pbar' },
+    el('div', { class: 'pbar-head' }, val, unit), track, tag);
+  let cur = NaN, shown = NaN;
+  function render() {
+    if (Number.isNaN(shown)) { fill.style.height = '0'; val.textContent = '—'; return; }
+    val.textContent = shown.toFixed(0);
+    fill.style.height = Math.min(100, Math.max(0, shown)) + '%';
+    const col = shown > 40 ? 'var(--good)' : shown > 15 ? 'var(--warn)' : 'var(--bad)';
+    fill.style.background = `linear-gradient(0deg, ${col}, ${col}cc)`;
+    fill.style.boxShadow = `0 0 22px ${col}`;
+  }
+  function tick() {
+    if (!Number.isNaN(cur)) shown = Number.isNaN(shown) ? cur : shown + (cur - shown) * 0.2;
+    render();
+    root._raf = requestAnimationFrame(tick);
+  }
+  tick();
+  return { root, update(f) { cur = typeof f === 'number' ? f : f.value; }, stop() { cancelAnimationFrame(root._raf); } };
 }
 
 /** Compact stat chip with icon, big value, small label. */

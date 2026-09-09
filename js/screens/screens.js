@@ -3,7 +3,7 @@
  * activities (Dashboard, Driving, Battery, Charging, Range, Climate, Tires,
  * Braking, Consumption).
  */
-import { el, tile, gauge, hbar, heatmap, timeplot, section, ringGauge, powerBar, chip } from '../ui/widgets.js';
+import { el, tile, gauge, hbar, heatmap, timeplot, section, ringGauge, powerBar, socBar, chip } from '../ui/widgets.js';
 import { Sid } from '../core/sid.js';
 
 export class Screen {
@@ -37,30 +37,31 @@ export class Screen {
 export class DashboardScreen extends Screen {
   constructor() { super('dashboard', 'Dashboard', '🏠'); }
   render(c, ctx) {
-    const speed = ringGauge('Speed', 0, 150, 'km/h', { size: 260 });
+    const speed = ringGauge('km/h', 0, 150, 'SPEED', { hud: true });
+    const soc = socBar({ label: 'CHARGE' });
     const pbar = powerBar(80, 45, { unit: 'kW' });
 
-    const soc = chip('State of charge', '%', '🔋');
-    const battTemp = chip('Battery temp', '°C', '🌡️');
-    const avg = chip('Avg consumption', 'kWh/100km', '📊');
+    const range = chip('Range', 'km', '🛣️');
+    const avg = chip('Consumption', 'kWh/100km', '📊');
+    const battTemp = chip('Battery', '°C', '🔋');
     const cabin = chip('Cabin', '°C', '💺');
     const outside = chip('Outside', '°C', '🌤️');
-    const range = chip('Range', 'km', '🛣️');
 
-    this._widgets = [speed, pbar];
+    this._widgets = [speed, soc, pbar];
 
     c.append(
-      el('div', { class: 'dash' },
-        el('div', { class: 'dash-hero' },
-          el('div', { class: 'dash-speed' }, speed.root),
-          el('div', { class: 'dash-power' }, pbar.root)),
-        el('div', { class: 'dash-chips' },
-          soc.root, range.root, avg.root, battTemp.root, cabin.root, outside.root)),
+      el('div', { class: 'hud' },
+        el('div', { class: 'hud-stage' },
+          el('div', { class: 'hud-side' }, soc.root),
+          el('div', { class: 'hud-ring' }, speed.root),
+          el('div', { class: 'hud-side' }, pbar.root)),
+        el('div', { class: 'hud-readouts' },
+          range.root, avg.root, battTemp.root, cabin.root, outside.root)),
     );
 
     this.bind(ctx, Sid.RealSpeed, speed, 300, f => f.value);
+    this.bind(ctx, Sid.UserSoC, soc, 3000, f => f.value);
     this.bind(ctx, Sid.DcPowerOut, pbar, 200, f => f.value);
-    this.bind(ctx, Sid.UserSoC, soc, 3000);
     this.bind(ctx, Sid.RangeEstimate, range, 3000);
     this.bind(ctx, Sid.AverageConsumption, avg, 5000);
     this.bind(ctx, Sid.HvTemp, battTemp, 5000);
