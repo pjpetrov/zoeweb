@@ -139,7 +139,7 @@ body:has(.hud) #content { padding: 0; }
 .hud {
   min-height: calc(100vh - 48px); max-width: 100vw; overflow-x: hidden;
   display: flex; flex-direction: column; justify-content: center; gap: 1vh;
-  padding: 3px 5px;
+  padding: clamp(4px, 2.5vh, 22px) 5px clamp(8px, 5vh, 44px);
   background:
     radial-gradient(120% 90% at 50% 30%, rgba(65,176,245,.10), transparent 60%),
     radial-gradient(80% 80% at 50% 120%, rgba(65,217,140,.08), transparent 60%),
