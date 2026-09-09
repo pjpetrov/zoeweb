@@ -148,6 +148,12 @@ export class ExpertScreen extends Screen {
       body,
     );
     refreshList();
+    // deep-link: ?ecu=<phrase> auto-selects the first matching ECU
+    const pre = new URLSearchParams(location.search).get('ecu');
+    if (pre) {
+      const row = [...listBox.children].find(r => r.textContent?.toLowerCase().includes(pre.toLowerCase()));
+      row?.click();
+    }
   }
 
   _renderEcu(ctx, ecu, body) {

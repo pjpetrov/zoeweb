@@ -46,6 +46,7 @@ keeps the screen awake.
 | Braking | brake blending: driver request vs regen vs friction |
 | Fault codes | read DTCs per ECU or scan the whole car, decoded with CanZE's DTC catalogs; separates real faults from "self-test not yet run" entries |
 | All data | browse and live-poll *every* known field of any ECU, with search |
+| Expert (DDT) | load DDT4All ECU definitions (zip or json) and read/write *any* Renault ECU's parameters, decoded with its own units/enums |
 
 ## Beyond CanZE — Service procedures
 
@@ -114,6 +115,27 @@ it was, even weeks later.
 misconfigure or permanently damage an ECU. Know your Renault DDT parameter
 documentation before writing anything, keep the car stationary, and never use
 this while driving. You alone are responsible for what you send to your car.
+
+## Beyond CanZE — Expert mode (DDT4All ported)
+
+![Expert (DDT) page](screenshots/expert.png)
+
+The **Expert (DDT)** page ports DDT4All into the browser with a cleaner UI. It
+reads DDT4All / DDT2000 **ECU definition files** and drives *any* Renault ECU
+through your dongle — the same universal capability as DDT4All, without the Qt
+interface.
+
+- **Load the whole `ecu.zip`** (unzipped in the browser, no external library) or
+  individual `.json` ECU files. A **searchable, sorted picker** lets you filter
+  the ECU list by name and select one.
+- **Read** any parameter — decoded with the ECU's own scaling, units and enum
+  labels (e.g. *"montre 24 heures"*, *"45677 Km"*, *"-1024.00 N.m"*), not raw hex.
+- **Write** configuration — enums become dropdowns, numbers a field; every write
+  is guarded (type-to-confirm) and recorded to **Backups** with one-click restore
+  of the exact original request.
+
+The proprietary Renault ECU database is **not** bundled — you load your own DDT
+files, exactly as DDT4All itself requires.
 
 ## Running it
 
